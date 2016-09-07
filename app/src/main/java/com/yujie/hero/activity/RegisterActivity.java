@@ -1,15 +1,287 @@
 package com.yujie.hero.activity;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.Spinner;
 
+import com.yujie.hero.HeroApplication;
+import com.yujie.hero.I;
 import com.yujie.hero.R;
+import com.yujie.hero.bean.AreasBean;
+import com.yujie.hero.bean.ClassObj;
+import com.yujie.hero.bean.CourseBean;
+import com.yujie.hero.bean.StartTimeBean;
+import com.yujie.hero.utils.OkHttpUtils;
+import com.yujie.hero.utils.Utils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class RegisterActivity extends AppCompatActivity {
-
+    public static final String TAG = RegisterActivity.class.getSimpleName();
+    private Context mContext;
+    @Bind(R.id.register_activity_EditText_inputUserName)
+    EditText registerActivityEditTextInputUserName;
+    @Bind(R.id.register_activity_EditText_inputPwd)
+    EditText registerActivityEditTextInputPwd;
+    @Bind(R.id.register_activity_RadioButton_boy)
+    RadioButton registerActivityRadioButtonBoy;
+    @Bind(R.id.register_activity_Button_chooseClass)
+    Button registerActivityButtonChooseClass;
+    @Bind(R.id.register_activity_Button_register)
+    Button registerActivityButtonRegister;
+    LayoutInflater inflater;
+    /**
+     * area list
+     **/
+    ArrayList<AreasBean> arealist;
+    HashMap<String, String> areaMap;
+    ArrayList<String> areaStr;
+    /**
+     * course list
+     **/
+    ArrayList<CourseBean> courselist;
+    HashMap<String, String> courseMap;
+    ArrayList<String> courseStr;
+    /**
+     * time list
+     */
+    ArrayList<StartTimeBean> timelist;
+    ArrayList<String> timeStr;
+    /** class list**/
+    ArrayList<ClassObj> classlist;
+    String[] classStr;
+    Dialog dialog;
+    int classId;
+    static final int CHOSECLASS = 100;
+    Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case CHOSECLASS:
+                    ClassObj obj = (ClassObj)msg.obj;
+                    registerActivityButtonChooseClass.setText(obj.getClass_name());
+                    break;
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+        ButterKnife.bind(this);
+        mContext = this;
+        initArea();
+        initCourse();
+        initStartTime();
     }
+
+
+    private void initStartTime() {
+        timelist = new ArrayList<>();
+        OkHttpUtils<StartTimeBean[]> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST, I.Request.REQUEST_GET_TIME)
+                .targetClass(StartTimeBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<StartTimeBean[]>() {
+                    @Override
+                    public void onSuccess(StartTimeBean[] result) {
+                        Log.e(TAG, "onSuccess: " + result);
+                        timelist = Utils.array2List(result);
+                        timeStr = new ArrayList<String>();
+                        for (StartTimeBean time : timelist) {
+                            timeStr.add(time.getStart_time());
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    /**
+     * get course list from server
+     */
+    private void initCourse() {
+        courselist = new ArrayList<>();
+        OkHttpUtils<CourseBean[]> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST, I.Request.REQUEST_GET_COURSE)
+                .targetClass(CourseBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<CourseBean[]>() {
+                    @Override
+                    public void onSuccess(CourseBean[] result) {
+                        Log.e(TAG, "onSuccess: " + result);
+                        courselist = Utils.array2List(result);
+                        courseMap = new HashMap<String, String>();
+                        courseStr = new ArrayList<String>();
+                        for (CourseBean courseBean : courselist) {
+                            courseMap.put(courseBean.getCourse_name(), courseBean.getSimple_name());
+                            courseStr.add(courseBean.getCourse_name());
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    /**
+     * get area list from server
+     */
+    private void initArea() {
+        arealist = new ArrayList<>();
+        OkHttpUtils<AreasBean[]> utils = new OkHttpUtils();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST, I.Request.REQUEST_GET_AREA)
+                .targetClass(AreasBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<AreasBean[]>() {
+                    @Override
+                    public void onSuccess(AreasBean[] result) {
+                        Log.e(TAG, "onSuccess: " + result);
+                        arealist = Utils.array2List(result);
+                        areaMap = new HashMap<String, String>();
+                        areaStr = new ArrayList<String>();
+                        for (AreasBean area : arealist) {
+                            areaMap.put(area.getArea_name(), area.getSimple_name());
+                            areaStr.add(area.getArea_name());
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "onError: " + error);
+                    }
+                });
+    }
+
+
+    @OnClick({R.id.register_activity_Button_chooseClass, R.id.register_activity_Button_register})
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.register_activity_Button_chooseClass:
+                showChoseDialog();
+                break;
+            case R.id.register_activity_Button_register:
+                break;
+        }
+    }
+
+    /**
+     * show dialog to chose class
+     */
+    private void showChoseDialog() {
+        inflater = LayoutInflater.from(this);
+        View view = inflater.inflate(R.layout.chose_class_layout, null);
+        final Spinner choseDialogSpinnerArea = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_area);
+        final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
+        final Spinner choseDialogSpinnerStartTime = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_startTime);
+        initSpinner(choseDialogSpinnerArea,choseDialogSpinnerCourse,choseDialogSpinnerStartTime);
+        dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String area = areaMap.get(choseDialogSpinnerArea.getSelectedItem().toString());
+                        String course = courseMap.get(choseDialogSpinnerCourse.getSelectedItem().toString());
+                        String time = choseDialogSpinnerStartTime.getSelectedItem().toString();
+                        getClassList(area,course,time);
+                    }
+                })
+                .create();
+        dialog.show();
+    }
+
+    /**
+     * get Classlist from server
+     * @param area
+     * @param course
+     * @param time
+     */
+    private void getClassList(String area, String course, String time) {
+        OkHttpUtils<ClassObj[]> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_GET_CLASS)
+                .addParam(I.IClass.B_AREA,area)
+                .addParam(I.IClass.B_COURSE,course)
+                .addParam(I.IClass.START_TIME,time)
+                .targetClass(ClassObj[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<ClassObj[]>() {
+                    @Override
+                    public void onSuccess(ClassObj[] result) {
+                        Log.e(TAG, "onSuccess: "+result );
+                        classlist = new ArrayList<ClassObj>();
+                        classlist = Utils.array2List(result);
+                        classStr = new String[classlist.size()];
+                        for (int i = 0;i<classlist.size();i++){
+                            classStr[i] = classlist.get(i).getClass_name();
+                        }
+                        showclassDialog();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+
+    }
+
+    /**
+     * show chose class dialog
+     */
+    private void showclassDialog() {
+        Dialog dialog = new AlertDialog.Builder(mContext)
+                .setItems(classStr, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ClassObj classObj = classlist.get(which);
+                        Message msg = Message.obtain();
+                        msg.what = CHOSECLASS;
+                        msg.obj = msg;
+                        mHandler.sendMessage(msg);
+                        classId = classObj.getId();
+                        dialog.dismiss();
+                    }
+                })
+                .create();
+        dialog.show();
+    }
+
+    private void initSpinner(Spinner choseDialogSpinnerArea, Spinner choseDialogSpinnerCourse, Spinner choseDialogSpinnerStartTime) {
+        ArrayAdapter<String> areaAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,areaStr);
+        areaAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        choseDialogSpinnerArea.setAdapter(areaAdapter);
+
+        ArrayAdapter<String> courseAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,courseStr);
+        courseAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        choseDialogSpinnerCourse.setAdapter(courseAdapter);
+
+        ArrayAdapter<String> timeAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,timeStr);
+        timeAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        choseDialogSpinnerStartTime.setAdapter(timeAdapter);
+    }
+
 }

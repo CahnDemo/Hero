@@ -7,15 +7,13 @@ public class I {
 	public static final String REGISTER_TOKEN = "980804224";
 	public static final String REQUEST = "request";
 	public interface Request{
-		public static String REQUEST_LOGIN = "userLogin";
+		public static final String REQUEST_LOGIN = "userLogin";
+		public static final String REQUEST_GET_AREA = "getAreas";
+		public static final String REQUEST_GET_COURSE = "getCourse";
+		public static final String REQUEST_GET_TIME = "getClassStartTime";
+		public static final String REQUEST_GET_CLASS = "getClassList";
 	}
-	public interface Super_User{
-		public static final String USER_NAME = "user_name";
-		public static final String USER_PWD = "user_pwd";
-		public static final String USER_REMARK = "user_remark";
-		public static final String REGISTER_CODE = "code";
-	}
-	
+
 	public interface User{
 		public static final String UID = "uid";
 		public static final String PWD = "pwd";
