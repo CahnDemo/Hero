@@ -1,7 +1,9 @@
-package com.yujie.hero;
+package com.yujie.hero.activity;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.yujie.hero.R;
 
 public class SplashActivity extends AppCompatActivity {
 
