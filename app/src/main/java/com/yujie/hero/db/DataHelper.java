@@ -25,7 +25,7 @@ public class DataHelper extends SQLiteOpenHelper {
                 "b_class Integer not null,"+
                 "avatar char(30),"+
                 "top_grade int(3),"+
-                "status Integer check(0 or 1),"+
+                "status Integer check(0 or 1)"+
                 ");";
         db.execSQL(user_sql);
         String word_content_sql = "create table if not exists t_words_content( " +
@@ -42,7 +42,7 @@ public class DataHelper extends SQLiteOpenHelper {
                 "user_name char(15) NOT NULL,"+
                 "course_id char(3) NOT NULL,"+
                 "b_class Integer NOT NULL,"+
-                "b_start_time char(20) NOT NULL,"+
+                "b_start_time char(20) NOT NULL"+
                 ");";
         db.execSQL(daily_exercise_sql);
     }

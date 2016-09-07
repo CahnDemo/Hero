@@ -14,6 +14,8 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
+import org.codehaus.jackson.map.ObjectMapper;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +25,7 @@ import java.net.URLEncoder;
  * Created by yao on 2016/8/16.
  */
 public class OkHttpUtils<T> {
+    public static final String TAG = OkHttpUtils.class.getSimpleName();
     private static String UTF_8 = "utf-8";
     public static final int RESULT_SUCCESS = 0;
     public static final int RESULT_ERROR = 1;
@@ -125,6 +128,9 @@ public class OkHttpUtils<T> {
         return this;
     }
 
+    public StringBuilder getmUrl() {
+        return mUrl;
+    }
 
     public void execute(OnCompleteListener<T> listener) {
         if (listener != null) {
@@ -158,9 +164,8 @@ public class OkHttpUtils<T> {
             @Override
             public void onResponse(Response response) throws IOException {
                 String json = response.body().string();
-                Log.e("yujie","json"+json);
-                Gson gson = new Gson();
-                T value = gson.fromJson(json, mClazz);
+                ObjectMapper om = new ObjectMapper();
+                T value = om.readValue(json, mClazz);
                 Message msg = Message.obtain();
                 msg.what = RESULT_SUCCESS;
                 msg.obj = value;

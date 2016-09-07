@@ -5,6 +5,10 @@ public class I {
 	public static final String UTF_8 = "utf-8";
 	public static final String SECRET = "nviKSJdoSJLKDJaiosjIOjkljdWDas";
 	public static final String REGISTER_TOKEN = "980804224";
+	public static final String REQUEST = "request";
+	public interface Request{
+		public static String REQUEST_LOGIN = "userLogin";
+	}
 	public interface Super_User{
 		public static final String USER_NAME = "user_name";
 		public static final String USER_PWD = "user_pwd";
