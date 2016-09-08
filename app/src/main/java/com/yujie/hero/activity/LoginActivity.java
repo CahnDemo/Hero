@@ -58,7 +58,7 @@ public class LoginActivity extends AppCompatActivity {
      * execute login
      */
     private void login() {
-        String uid = loginActivityEditTextInputPhone.getText().toString();
+        final String uid = loginActivityEditTextInputPhone.getText().toString();
         String pwd = loginActivityEditTextInputPwd.getText().toString();
         if (uid.isEmpty()){
             loginActivityEditTextInputPhone.setError("No input,please try again");
@@ -83,10 +83,18 @@ public class LoginActivity extends AppCompatActivity {
                         if (result==null){
                             return;
                         }else {
-                            if(addData(result)){
-                                HeroApplication.getInstance().setCurrentUser(result);
-                                startActivity(new Intent(mContext,MainActivity.class));
-                                finish();
+                            if(new DataHelper(mContext).findUserByUid(uid)!=null){
+                                if(updateData(result)){
+                                    HeroApplication.getInstance().setCurrentUser(result);
+                                    startActivity(new Intent(mContext,MainActivity.class));
+                                    finish();
+                                }
+                            }else {
+                                if(addData(result)){
+                                    HeroApplication.getInstance().setCurrentUser(result);
+                                    startActivity(new Intent(mContext,MainActivity.class));
+                                    finish();
+                                }
                             }
                         }
                     }
@@ -97,6 +105,16 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
         Log.e(TAG, "login: "+utils.getmUrl());
+    }
+
+    /**
+     * when sign in success,and the user is existed in database,update user's status to "1"
+     * @param result
+     * @return
+     */
+    private boolean updateData(UserBean result) {
+        DataHelper helper = new DataHelper(mContext);
+        return helper.updateStatus(1,result.getUser_name());
     }
 
     /**

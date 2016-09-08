@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,7 +24,10 @@ import com.yujie.hero.R;
 import com.yujie.hero.bean.AreasBean;
 import com.yujie.hero.bean.ClassObj;
 import com.yujie.hero.bean.CourseBean;
+import com.yujie.hero.bean.Result;
 import com.yujie.hero.bean.StartTimeBean;
+import com.yujie.hero.bean.UserBean;
+import com.yujie.hero.db.DataHelper;
 import com.yujie.hero.utils.OkHttpUtils;
 import com.yujie.hero.utils.Utils;
 
@@ -36,6 +40,8 @@ import butterknife.OnClick;
 
 public class RegisterActivity extends AppCompatActivity {
     public static final String TAG = RegisterActivity.class.getSimpleName();
+    @Bind(R.id.register_activity_EditText_stuNum)
+    EditText registerActivityEditTextStuNum;
     private Context mContext;
     @Bind(R.id.register_activity_EditText_inputUserName)
     EditText registerActivityEditTextInputUserName;
@@ -65,24 +71,41 @@ public class RegisterActivity extends AppCompatActivity {
      */
     ArrayList<StartTimeBean> timelist;
     ArrayList<String> timeStr;
-    /** class list**/
+    /**
+     * class list
+     **/
     ArrayList<ClassObj> classlist;
     String[] classStr;
     Dialog dialog;
-    int classId;
+
+    /**class id**/
+    int classId = 0;
+    /** userName*/
+    String user_name;
+    /** password*/
+    String passWord;
+    /** sex 1:boy  2:girl */
+    int sex = 0;
+    /** uid*/
+    String uid;
+    /** top_grade*/
+    int top_grade = 0;
+    /** classSimpleName*/
+    String classSimpleName;
     static final int CHOSECLASS = 100;
-    Handler mHandler = new Handler(){
+    Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what){
+            switch (msg.what) {
                 case CHOSECLASS:
-                    ClassObj obj = (ClassObj)msg.obj;
+                    ClassObj obj = (ClassObj) msg.obj;
                     registerActivityButtonChooseClass.setText(obj.getClass_name());
                     break;
             }
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -185,8 +208,71 @@ public class RegisterActivity extends AppCompatActivity {
                 showChoseDialog();
                 break;
             case R.id.register_activity_Button_register:
+                goRegister();
                 break;
         }
+    }
+
+    /**
+     * do Register
+     */
+    private void goRegister() {
+        user_name = registerActivityEditTextInputUserName.getText().toString();
+        passWord = registerActivityEditTextInputPwd.getText().toString();
+        sex = registerActivityRadioButtonBoy.isChecked()?1:2;
+        String stuNum = registerActivityEditTextStuNum.getText().toString();
+        if(user_name.isEmpty()){
+            registerActivityEditTextInputUserName.setError("No input,please try again");
+            registerActivityEditTextInputUserName.requestFocus();
+            return;
+        }
+        if(passWord.isEmpty()){
+            registerActivityEditTextInputPwd.setError("No input,please try again");
+            registerActivityEditTextInputPwd.requestFocus();
+            return;
+        }
+        if (sex==0){
+            return;
+        }
+        if (stuNum.isEmpty()){
+            registerActivityEditTextStuNum.setError("No input,please try again");
+            registerActivityEditTextStuNum.requestFocus();
+            return;
+        }
+        if(classId==0 | classSimpleName.isEmpty()){
+            return;
+        }
+        uid = classSimpleName+stuNum.toString();
+        OkHttpUtils<Result> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_REGISTER)
+                .addParam(I.User.UID,uid)
+                .addParam(I.User.PWD,passWord)
+                .addParam(I.User.USER_NAME,user_name)
+                .addParam(I.User.SEX,sex+"")
+                .addParam(I.User.B_CLASS,classId+"")
+                .addParam(I.User.TOP_GRADE,top_grade+"")
+                .post()
+                .targetClass(Result.class)
+                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                    @Override
+                    public void onSuccess(Result result) {
+                        Log.e(TAG, "onSuccess: "+result );
+                        if (result!=null){
+                            UserBean user = new UserBean(uid,passWord,user_name,sex,classId,top_grade,null);
+                            HeroApplication.getInstance().setCurrentUser(user);
+                            DataHelper help = new DataHelper(mContext);
+                            help.addUser(user,0);
+                            startActivity(new Intent(mContext,LoginActivity.class));
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
     }
 
     /**
@@ -198,7 +284,7 @@ public class RegisterActivity extends AppCompatActivity {
         final Spinner choseDialogSpinnerArea = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_area);
         final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
         final Spinner choseDialogSpinnerStartTime = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_startTime);
-        initSpinner(choseDialogSpinnerArea,choseDialogSpinnerCourse,choseDialogSpinnerStartTime);
+        initSpinner(choseDialogSpinnerArea, choseDialogSpinnerCourse, choseDialogSpinnerStartTime);
         dialog = new AlertDialog.Builder(this)
                 .setView(view)
                 .setNegativeButton("OK", new DialogInterface.OnClickListener() {
@@ -207,7 +293,7 @@ public class RegisterActivity extends AppCompatActivity {
                         String area = areaMap.get(choseDialogSpinnerArea.getSelectedItem().toString());
                         String course = courseMap.get(choseDialogSpinnerCourse.getSelectedItem().toString());
                         String time = choseDialogSpinnerStartTime.getSelectedItem().toString();
-                        getClassList(area,course,time);
+                        getClassList(area, course, time);
                     }
                 })
                 .create();
@@ -216,6 +302,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     /**
      * get Classlist from server
+     *
      * @param area
      * @param course
      * @param time
@@ -223,19 +310,19 @@ public class RegisterActivity extends AppCompatActivity {
     private void getClassList(String area, String course, String time) {
         OkHttpUtils<ClassObj[]> utils = new OkHttpUtils<>();
         utils.url(HeroApplication.SERVER_ROOT)
-                .addParam(I.REQUEST,I.Request.REQUEST_GET_CLASS)
-                .addParam(I.IClass.B_AREA,area)
-                .addParam(I.IClass.B_COURSE,course)
-                .addParam(I.IClass.START_TIME,time)
+                .addParam(I.REQUEST, I.Request.REQUEST_GET_CLASS)
+                .addParam(I.IClass.B_AREA, area)
+                .addParam(I.IClass.B_COURSE, course)
+                .addParam(I.IClass.START_TIME, time)
                 .targetClass(ClassObj[].class)
                 .execute(new OkHttpUtils.OnCompleteListener<ClassObj[]>() {
                     @Override
                     public void onSuccess(ClassObj[] result) {
-                        Log.e(TAG, "onSuccess: "+result );
+                        Log.e(TAG, "onSuccess: " + result);
                         classlist = new ArrayList<ClassObj>();
                         classlist = Utils.array2List(result);
                         classStr = new String[classlist.size()];
-                        for (int i = 0;i<classlist.size();i++){
+                        for (int i = 0; i < classlist.size(); i++) {
                             classStr[i] = classlist.get(i).getClass_name();
                         }
                         showclassDialog();
@@ -260,26 +347,32 @@ public class RegisterActivity extends AppCompatActivity {
                         ClassObj classObj = classlist.get(which);
                         Message msg = Message.obtain();
                         msg.what = CHOSECLASS;
-                        msg.obj = msg;
+                        msg.obj = classObj;
                         mHandler.sendMessage(msg);
                         classId = classObj.getId();
-                        dialog.dismiss();
+                        classSimpleName = classObj.getSimple_name();
                     }
                 })
                 .create();
         dialog.show();
     }
 
+    /**
+     * init dialog's spinner
+     * @param choseDialogSpinnerArea
+     * @param choseDialogSpinnerCourse
+     * @param choseDialogSpinnerStartTime
+     */
     private void initSpinner(Spinner choseDialogSpinnerArea, Spinner choseDialogSpinnerCourse, Spinner choseDialogSpinnerStartTime) {
-        ArrayAdapter<String> areaAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,areaStr);
+        ArrayAdapter<String> areaAdapter = new ArrayAdapter<String>(mContext, R.layout.support_simple_spinner_dropdown_item, areaStr);
         areaAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         choseDialogSpinnerArea.setAdapter(areaAdapter);
 
-        ArrayAdapter<String> courseAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,courseStr);
+        ArrayAdapter<String> courseAdapter = new ArrayAdapter<String>(mContext, R.layout.support_simple_spinner_dropdown_item, courseStr);
         courseAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         choseDialogSpinnerCourse.setAdapter(courseAdapter);
 
-        ArrayAdapter<String> timeAdapter = new ArrayAdapter<String>(mContext,R.layout.support_simple_spinner_dropdown_item,timeStr);
+        ArrayAdapter<String> timeAdapter = new ArrayAdapter<String>(mContext, R.layout.support_simple_spinner_dropdown_item, timeStr);
         timeAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         choseDialogSpinnerStartTime.setAdapter(timeAdapter);
     }

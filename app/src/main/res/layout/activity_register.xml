@@ -12,7 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_widthPercent="15%"
-        app:layout_heightPercent="25%"
+        app:layout_heightPercent="18%"
         android:src="@mipmap/app_icon"
         android:layout_centerHorizontal="true"
         app:layout_marginTopPercent="3%"
@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_heightPercent="15%"
-        app:layout_marginTopPercent="30%"
+        app:layout_marginTopPercent="22%"
         >
         <ImageView
             android:layout_width="0dp"
@@ -43,7 +43,7 @@
             android:id="@+id/register_activity_EditText_inputUserName"
             android:hint="请输入真实姓名"
             android:textColorHint="#afdae1e1"
-            android:inputType="textPassword"
+            android:inputType="text"
             />
         <View
             android:layout_width="match_parent"
@@ -60,7 +60,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_heightPercent="15%"
-        app:layout_marginTopPercent="46%"
+        app:layout_marginTopPercent="36%"
         >
         <ImageView
             android:layout_width="0dp"
@@ -99,7 +99,7 @@
         android:layout_width="match_parent"
         app:layout_heightPercent="15%"
         android:layout_height="0dp"
-        app:layout_marginTopPercent="60%"
+        app:layout_marginTopPercent="51%"
         app:layout_marginLeftPercent="5%"
         app:layout_marginRightPercent="5%"
         android:orientation="horizontal"
@@ -130,19 +130,36 @@
                 />
         </RadioGroup>
 
-        <Button
+        <EditText
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            app:layout_widthPercent="50%"
-            app:layout_marginLeftPercent="5%"
-            android:background="@drawable/register_activity_choseclass_btn_bg"
-            android:text="点击选择班级"
-            android:textSize="23dp"
-            android:textColor="#fff"
-            android:id="@+id/register_activity_Button_chooseClass"
+            android:layout_height="0dp"
+            app:layout_heightPercent="80%"
+            app:layout_widthPercent="30%"
+            app:layout_marginRightPercent="5%"
+            app:layout_marginLeftPercent="20%"
+            android:background="@null"
+            android:textSize="20dp"
+            android:id="@+id/register_activity_EditText_stuNum"
+            android:hint="请输入你在班级的学号"
+            android:textColorHint="#afdae1e1"
+            android:inputType="number"
             />
+
     </com.yujie.hero.view.PercentLinearLayout>
 
+    <Button
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_widthPercent="80%"
+        app:layout_marginTopPercent="64%"
+        app:layout_marginLeftPercent="10%"
+        android:background="@drawable/register_activity_choseclass_btn_bg"
+        android:text="点击选择班级"
+        android:textSize="23dp"
+        android:textColor="#fff"
+        app:layout_heightPercent="13%"
+        android:id="@+id/register_activity_Button_chooseClass"
+        />
 
     <Button
         android:layout_width="0dp"

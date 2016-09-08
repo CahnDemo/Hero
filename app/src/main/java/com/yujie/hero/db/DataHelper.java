@@ -127,6 +127,25 @@ public class DataHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public UserBean findUserByUid(String id){
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "select * from t_user where uid=?";
+        Cursor cursor = db.rawQuery(sql, new String[]{id});
+        while (cursor.moveToNext()){
+            String uid = cursor.getString(cursor.getColumnIndex("uid"));
+            String pwd = cursor.getString(cursor.getColumnIndex("pwd"));
+            String user_name = cursor.getString(cursor.getColumnIndex("user_name"));
+            int sex = cursor.getInt(cursor.getColumnIndex("sex"));
+            int b_class = cursor.getInt(cursor.getColumnIndex("b_class"));
+            String avatar = cursor.getString(cursor.getColumnIndex("avatar"));
+            int top_grade = cursor.getInt(cursor.getColumnIndex("top_grade"));
+            int status = cursor.getInt(cursor.getColumnIndex("status"));
+            UserBean user = new UserBean(uid,pwd,user_name,sex,b_class,top_grade,avatar);
+            return user;
+        }
+        return null;
+    }
+
     /**
      * 添加日常练习成绩
      * @param user
