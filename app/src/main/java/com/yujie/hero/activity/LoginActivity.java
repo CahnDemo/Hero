@@ -40,6 +40,23 @@ public class LoginActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         mContext = this;
         pd = new ProgressDialog(mContext);
+
+    }
+
+    /**
+     * init uid
+     */
+    private void initUid() {
+        UserBean currentUser = HeroApplication.getInstance().getCurrentUser();
+        if (currentUser!=null){
+            loginActivityEditTextInputPhone.setText(currentUser.getUid());
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initUid();
     }
 
     @OnClick({R.id.login_activity_Button_login, R.id.login_activity_Button_register})
