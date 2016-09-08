@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.yujie.hero.HeroApplication;
 import com.yujie.hero.I;
@@ -263,6 +264,7 @@ public class RegisterActivity extends AppCompatActivity {
                             HeroApplication.getInstance().setCurrentUser(user);
                             DataHelper help = new DataHelper(mContext);
                             help.addUser(user,0);
+                            Toast.makeText(RegisterActivity.this,"您的UID是: "+uid+" 已经为您自动填充",Toast.LENGTH_LONG).show();
                             startActivity(new Intent(mContext,LoginActivity.class));
                             finish();
                         }
