@@ -1,8 +1,16 @@
 package com.yujie.hero.activity;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -11,39 +19,290 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+import com.yujie.hero.HeroApplication;
+import com.yujie.hero.I;
 import com.yujie.hero.R;
+import com.yujie.hero.bean.ExerciseBean;
+import com.yujie.hero.bean.UserBean;
+import com.yujie.hero.utils.OkHttpUtils;
+import com.yujie.hero.utils.Utils;
+import com.yujie.hero.view.CircleTextImageView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lecho.lib.hellocharts.animation.ChartAnimationListener;
+import lecho.lib.hellocharts.listener.ComboLineColumnChartOnValueSelectListener;
+import lecho.lib.hellocharts.listener.DummyLineChartOnValueSelectListener;
+import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
+import lecho.lib.hellocharts.model.Axis;
+import lecho.lib.hellocharts.model.AxisValue;
+import lecho.lib.hellocharts.model.Column;
+import lecho.lib.hellocharts.model.ColumnChartData;
+import lecho.lib.hellocharts.model.ComboLineColumnChartData;
+import lecho.lib.hellocharts.model.Line;
+import lecho.lib.hellocharts.model.LineChartData;
+import lecho.lib.hellocharts.model.PointValue;
+import lecho.lib.hellocharts.model.SubcolumnValue;
+import lecho.lib.hellocharts.model.ValueShape;
+import lecho.lib.hellocharts.model.Viewport;
+import lecho.lib.hellocharts.util.ChartUtils;
+import lecho.lib.hellocharts.view.ComboLineColumnChartView;
+import lecho.lib.hellocharts.view.LineChartView;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    public static final String TAG = MainActivity.class.getSimpleName();
+    private Context mContext;
+    private UserBean currentUser;
+    private CircleTextImageView userAvatar;
+    private TextView userName;
+    private TextView userUid;
+    private TextView userClass;
+    /** student's grades*/
+    ArrayList<ExerciseBean> stuGrades;
 
+    private TextView noJoinTxt;
+    private ImageView noJoinImg;
+    private ComboLineColumnChartView chart;
+    private ComboLineColumnChartData data;
+
+    private int numberOfLines = 1;
+    private int maxNumberOfLines = 1;
+    private int numberOfPoints = 0;
+
+    int[][] randomNumbersTab;
+
+    private boolean hasAxes = true;
+    private boolean hasAxesNames = true;
+    private boolean hasPoints = true;
+    private boolean hasLines = true;
+    private boolean isCubic = true;
+    private boolean hasLabels = true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mContext = this;
+        initView();
+        initUserInfo();
+        initActionBar();
+        initNavigationView();
+        initData();
+        initChart();
+    }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+    /**
+     * init view
+     */
+    private void initView() {
+        noJoinTxt = (TextView) findViewById(R.id.NoJoinTxt);
+        noJoinImg = (ImageView) findViewById(R.id.NoJoinImg);
+    }
+
+    /**
+     * init the chart view
+     */
+    private void initChart() {
+        chart = (ComboLineColumnChartView) findViewById(R.id.main_activity_col_line_showGrades);
+        chart.setOnValueTouchListener(new ValueTouchListener());
+
+    }
+
+    /**
+     * init student's grades list
+     */
+    private void generateValues() {
+        for (int i = 0; i < maxNumberOfLines; ++i) {
+            for (int j = 0; j < numberOfPoints; ++j) {
+                randomNumbersTab[i][j] = stuGrades.get(j).getGrade();
             }
-        });
+        }
+    }
 
+    /**
+     * init the chart,draw the AxisX and AxisY
+     */
+    private void generateData() {
+        // Chart looks the best when line data and column data have similar maximum viewports.
+        data = new ComboLineColumnChartData(generateColumnData(), generateLineData());
+
+        if (hasAxes) {
+            Axis axisX = new Axis();
+            Axis axisY = new Axis().setHasLines(true);
+            if (hasAxesNames) {
+                axisX.setName("time");
+                axisY.setName("grade");
+                axisX.setTextColor(Color.BLACK);
+                axisY.setTextColor(Color.BLACK);
+            }
+            data.setAxisXBottom(axisX);
+            data.setAxisYLeft(axisY);
+        } else {
+            data.setAxisXBottom(null);
+            data.setAxisYLeft(null);
+        }
+        chart.setComboLineColumnChartData(data);
+    }
+
+    /**
+     * init the lineChart's data
+     * @return
+     */
+    private LineChartData generateLineData() {
+        LineChartData lineChartData;
+        List<Line> lines = new ArrayList<Line>();
+        for (int i = 0; i < numberOfLines; ++i) {
+            List<PointValue> values = new ArrayList<PointValue>();
+            for (int j = 0; j < numberOfPoints; ++j) {
+                values.add(new PointValue(j, randomNumbersTab[i][j]));
+            }
+
+            Line line = new Line(values);
+            line.setColor(ChartUtils.COLORS[i]);
+            line.setCubic(isCubic);
+            line.setHasLabels(hasLabels);
+            line.setHasLines(hasLines);
+            line.setHasPoints(hasPoints);
+            lines.add(line);
+        }
+
+        lineChartData = new LineChartData(lines);
+        return lineChartData;
+
+    }
+
+    /**
+     * init the columnChar's data.
+     * @return
+     */
+    private ColumnChartData generateColumnData() {
+        // Column can have many subcolumns, here by default I use 1 subcolumn in each of 8 columns.
+        List<Column> columns = new ArrayList<Column>();
+        List<SubcolumnValue> values;
+        for (int i = 0; i < numberOfPoints; ++i) {
+
+            values = new ArrayList<SubcolumnValue>();
+            for (int j = 0; j < numberOfLines; ++j) {
+                values.add(new SubcolumnValue(stuGrades.get(i).getGrade(), ChartUtils.COLOR_GREEN));
+            }
+
+            columns.add(new Column(values));
+        }
+
+        ColumnChartData columnChartData = new ColumnChartData(columns);
+        return columnChartData;
+    }
+
+    /**
+     * get studtent's nearly exercise grades from server
+     */
+    private void initData() {
+        stuGrades = new ArrayList<>();
+        OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_GETNEARLYGRADES)
+                .addParam(I.User.USER_NAME,currentUser.getUser_name())
+                .targetClass(ExerciseBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
+                    @Override
+                    public void onSuccess(ExerciseBean[] result) {
+                        if (result!=null&result.length!=0){
+                            chart.setVisibility(View.VISIBLE);
+                            noJoinImg.setVisibility(View.GONE);
+                            noJoinTxt.setVisibility(View.VISIBLE);
+                            noJoinTxt.setText("The last ten exercises");
+                            stuGrades = Utils.array2List(result);
+                            Log.e(TAG, "onSuccess: "+stuGrades.toString() );
+                            numberOfPoints = stuGrades.size();
+                            randomNumbersTab = new int[maxNumberOfLines][numberOfPoints];
+                            generateValues();
+                            generateData();
+                        }else {
+                            chart.setVisibility(View.GONE);
+                            noJoinImg.setVisibility(View.VISIBLE);
+                            noJoinTxt.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    private void initUserInfo() {
+        currentUser = HeroApplication.getInstance().getCurrentUser();
+    }
+
+    /**
+     * init navigationview and init userAvatar,userName,userUid...
+     */
+    private void initNavigationView() {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        View headerView = navigationView.getHeaderView(0);
+        /** user avatar*/
+        userAvatar = (CircleTextImageView) headerView.findViewById(R.id.userAvatar);
+        Picasso.with(this).load(HeroApplication.AVATAR_ROOT+currentUser.getAvatar())
+                .placeholder(R.mipmap.app_icon)
+                .error(R.drawable.ic_menu_camera)
+                .into(userAvatar);
+        /** userName*/
+        userName = (TextView) headerView.findViewById(R.id.userName);
+        userName.setText(currentUser.getUser_name());
+        /** userUid*/
+        userUid = (TextView) headerView.findViewById(R.id.userUid);
+        userUid.setText(currentUser.getUid());
+        /** user class*/
+        userClass = (TextView) headerView.findViewById(R.id.userclass);
+        OkHttpUtils<String> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_GETCLASSNAME)
+                .addParam(I.Exam.ID,currentUser.getB_class()+"")
+                .targetClass(String.class)
+                .execute(new OkHttpUtils.OnCompleteListener<String>() {
+                    @Override
+                    public void onSuccess(String result) {
+                        if (result!=null){
+                            userClass.setText(result);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+
+    /**
+     * init view
+     */
+    private void initActionBar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("UcaiHero");
+        setSupportActionBar(toolbar);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
     }
 
+    /**
+     * when the drawer_layout is opening,and you press the back keyboard,
+     * the drawer will close,else,will super the onBackPressed();
+     */
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -54,50 +313,125 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
+    /**
+     * NavigationItemSelected listener
+     * @param item
+     * @return
+     */
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.getTenGrades) {
+            getTenGrades();
+        } else if (id == R.id.getClassSort) {
 
-        } else if (id == R.id.nav_slideshow) {
+        } else if (id == R.id.getCourseSort) {
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.getTimeSort) {
 
-        } else if (id == R.id.nav_share) {
+        } else if (id == R.id.startExam) {
 
-        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.startExercise) {
+            String[] time = new String[]{"1分钟","3分钟","5分钟","10分钟"};
+            String[] course = new String[]{"Android","IOS","PHP","H5"};
+            View view = LayoutInflater.from(this).inflate(R.layout.dialog_chose,null);
+            final Spinner choseDialogSpinnerTime = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_time);
+            final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
+            initSpinner(choseDialogSpinnerCourse, choseDialogSpinnerTime,time,course);
+            Dialog dialog = new AlertDialog.Builder(this)
+                    .setTitle("chose time and course")
+                    .setView(view)
+                    .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String course = choseDialogSpinnerCourse.getSelectedItem().toString();
+                            HeroApplication.getInstance().setCurrentTestCourse(course);
+                            String course_simpleName = course.substring(0,1).toLowerCase();
+                            String time = choseDialogSpinnerTime.getSelectedItem().toString().substring(0,1);
+                            Intent intent = new Intent(mContext,GameActivity.class);
+                            intent.putExtra("action_code",course_simpleName+time);
+                            startActivity(intent);
+                        }
+                    })
+                    .create();
+            dialog.show();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void initSpinner(Spinner choseDialogSpinnerCourse, Spinner choseDialogSpinnerTime, String[] time, String[] course) {
+        ArrayAdapter<String> timeAdapter = new ArrayAdapter<String>(mContext, R.layout.support_simple_spinner_dropdown_item, Utils.array2List(time));
+        timeAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        choseDialogSpinnerTime.setAdapter(timeAdapter);
+
+        ArrayAdapter<String> courseAdapter = new ArrayAdapter<String>(mContext, R.layout.support_simple_spinner_dropdown_item, Utils.array2List(course));
+        courseAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        choseDialogSpinnerCourse.setAdapter(courseAdapter);
+    }
+
+    /**
+     * get the best ten grades from server and init the chart to set the data to chart
+     */
+    private void getTenGrades() {
+        ArrayList<ExerciseBean> bestGrades = new ArrayList<>();
+        OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_GET_TEN_GRADES)
+                .addParam(I.User.USER_NAME,currentUser.getUser_name())
+                .targetClass(ExerciseBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
+                    @Override
+                    public void onSuccess(ExerciseBean[] result) {
+                        if (result!=null&result.length!=0){
+                            chart.setVisibility(View.VISIBLE);
+                            noJoinImg.setVisibility(View.GONE);
+                            noJoinTxt.setVisibility(View.VISIBLE);
+                            noJoinTxt.setText("The best ten exercises");
+                            stuGrades = Utils.array2List(result);
+                            Log.e(TAG, "onSuccess: "+stuGrades.toString() );
+                            numberOfPoints = stuGrades.size();
+                            randomNumbersTab = new int[maxNumberOfLines][numberOfPoints];
+                            generateValues();
+                            generateData();
+                        }else {
+                            chart.setVisibility(View.GONE);
+                            noJoinImg.setVisibility(View.VISIBLE);
+                            noJoinTxt.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    /**
+     * the ValueTouchListener,show the option time if clicked;
+     */
+    private class ValueTouchListener implements ComboLineColumnChartOnValueSelectListener {
+
+        @Override
+        public void onValueDeselected() {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onColumnValueSelected(int columnIndex, int subcolumnIndex, SubcolumnValue value) {
+            Toast.makeText(mContext,stuGrades.get(subcolumnIndex).getExe_tiem(), Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onPointValueSelected(int lineIndex, int pointIndex, PointValue value) {
+            Toast.makeText(mContext, stuGrades.get(pointIndex).getExe_tiem(), Toast.LENGTH_SHORT).show();
+        }
+
     }
 }

@@ -9,6 +9,7 @@ import com.yujie.hero.bean.UserBean;
  */
 public class HeroApplication extends Application {
     public static final String SERVER_ROOT = "http://115.28.2.61:8080/Hero/Server?";
+    public static final String AVATAR_ROOT = "http://115.28.2.61:8080/Hero/";
     @Override
     public void onCreate() {
         super.onCreate();
@@ -26,7 +27,16 @@ public class HeroApplication extends Application {
      * current user who signed in
      */
     private UserBean currentUser;
-    
+
+    public String getCurrentTestCourse() {
+        return currentTestCourse;
+    }
+
+    public void setCurrentTestCourse(String currentTestCourse) {
+        this.currentTestCourse = currentTestCourse;
+    }
+
+    private String currentTestCourse;
     private static HeroApplication instance = null;
      private HeroApplication(){}
      public static HeroApplication getInstance() {

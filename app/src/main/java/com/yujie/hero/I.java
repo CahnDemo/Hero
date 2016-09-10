@@ -13,6 +13,9 @@ public class I {
 		public static final String REQUEST_GET_TIME = "getClassStartTime";
 		public static final String REQUEST_GET_CLASS = "getClassList";
 		public static final String REQUEST_REGISTER = "userRegister";
+		public static final String REQUEST_GETCLASSNAME = "getClassNameById";
+		public static final String REQUEST_GETNEARLYGRADES = "getNearlyGradeByUid";
+		public static final String REQUEST_GET_TEN_GRADES = "getTenGrade";
 	}
 
 	public interface User{
