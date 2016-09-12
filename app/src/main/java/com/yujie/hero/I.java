@@ -16,6 +16,7 @@ public class I {
 		public static final String REQUEST_GETCLASSNAME = "getClassNameById";
 		public static final String REQUEST_GETNEARLYGRADES = "getNearlyGradeByUid";
 		public static final String REQUEST_GET_TEN_GRADES = "getTenGrade";
+		public static final String REQUEST_DOWNLOAD_CONTENT = "getWordContent";
 	}
 
 	public interface User{

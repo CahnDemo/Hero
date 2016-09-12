@@ -2,6 +2,7 @@ package com.yujie.hero.activity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,11 +32,14 @@ import com.yujie.hero.I;
 import com.yujie.hero.R;
 import com.yujie.hero.bean.ExerciseBean;
 import com.yujie.hero.bean.UserBean;
+import com.yujie.hero.bean.WordContentBean;
+import com.yujie.hero.db.DataHelper;
 import com.yujie.hero.utils.OkHttpUtils;
 import com.yujie.hero.utils.Utils;
 import com.yujie.hero.view.CircleTextImageView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lecho.lib.hellocharts.animation.ChartAnimationListener;
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity
     private TextView userName;
     private TextView userUid;
     private TextView userClass;
+    private ProgressDialog pd;
     /** student's grades*/
     ArrayList<ExerciseBean> stuGrades;
 
@@ -105,6 +110,7 @@ public class MainActivity extends AppCompatActivity
     private void initView() {
         noJoinTxt = (TextView) findViewById(R.id.NoJoinTxt);
         noJoinImg = (ImageView) findViewById(R.id.NoJoinImg);
+        pd = new ProgressDialog(this);
     }
 
     /**
@@ -349,10 +355,19 @@ public class MainActivity extends AppCompatActivity
                             String course = choseDialogSpinnerCourse.getSelectedItem().toString();
                             HeroApplication.getInstance().setCurrentTestCourse(course);
                             String course_simpleName = course.substring(0,1).toLowerCase();
-                            String time = choseDialogSpinnerTime.getSelectedItem().toString().substring(0,1);
-                            Intent intent = new Intent(mContext,GameActivity.class);
-                            intent.putExtra("action_code",course_simpleName+time);
-                            startActivity(intent);
+                            String time = choseDialogSpinnerTime.getSelectedItem().toString().substring(0,2);
+                            if (time.substring(1,2).equals("分")){
+                                time = time.substring(0,1);
+                            }
+                            if(new DataHelper(mContext).getWordCount(course_simpleName)==0){
+                                Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_LONG).show();
+                                pd.show();
+                                downloadContent(course_simpleName,time);
+                            }else {
+                                Intent intent = new Intent(mContext,GameActivity.class);
+                                intent.putExtra("action_code",course_simpleName+time);
+                                startActivity(intent);
+                            }
                         }
                     })
                     .create();
@@ -362,6 +377,40 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * download the word data to local database
+     * @param course_simpleName
+     * @param time
+     */
+    private void downloadContent(final String course_simpleName, final String time) {
+        OkHttpUtils<WordContentBean[]> utils = new OkHttpUtils<WordContentBean[]>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_DOWNLOAD_CONTENT)
+                .targetClass(WordContentBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<WordContentBean[]>() {
+                    @Override
+                    public void onSuccess(WordContentBean[] result) {
+                        if (result!=null&result.length!=0){
+                            Log.e(TAG, "onSuccess: "+ Arrays.toString(result) );
+                            Toast.makeText(MainActivity.this,"Download finish,Now is add to local database...please wait...",Toast.LENGTH_LONG).show();
+                            if (new DataHelper(mContext).addWord(Utils.array2List(result))){
+                                pd.dismiss();
+                                Toast.makeText(MainActivity.this,"add success!",Toast.LENGTH_LONG).show();
+                                Intent intent = new Intent(mContext,GameActivity.class);
+                                intent.putExtra("action_code",course_simpleName+time);
+                                startActivity(intent);
+                            }
+                        }
+
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
     }
 
     private void initSpinner(Spinner choseDialogSpinnerCourse, Spinner choseDialogSpinnerTime, String[] time, String[] course) {

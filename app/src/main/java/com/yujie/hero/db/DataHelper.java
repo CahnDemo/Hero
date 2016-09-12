@@ -5,11 +5,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import com.yujie.hero.activity.MainActivity;
 import com.yujie.hero.bean.ExerciseBean;
 import com.yujie.hero.bean.UserBean;
+import com.yujie.hero.bean.WordContentBean;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 /**
- * Created by Administrator on 2016/9/5.
+ * Created by yujie on 2016/9/5.
  */
 public class DataHelper extends SQLiteOpenHelper {
     public DataHelper(Context context) {
@@ -18,32 +25,32 @@ public class DataHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String user_sql = "create table if not exists t_user( " +
-                "uid char(15) primary key,"+
-                "pwd char(20) not null,"+
-                "user_name char(15) not null,"+
-                "sex Integer check(1 or 2),"+
-                "b_class Integer not null,"+
-                "avatar char(30),"+
-                "top_grade int(3),"+
-                "status Integer check(0 or 1)"+
-                ");";
+                    "uid char(15) primary key,"+
+                    "pwd char(20) not null,"+
+                    "user_name char(15) not null,"+
+                    "sex Integer check(1 or 2),"+
+                    "b_class Integer not null,"+
+                    "avatar char(30),"+
+                    "top_grade int(3),"+
+                    "status Integer check(0 or 1)"+
+                    ");";
         db.execSQL(user_sql);
         String word_content_sql = "create table if not exists t_words_content( " +
-                "id Integer primary key AUTOINCREMENT,"+
-                "word char(20) not null,"+
-                "course_id char(3) not null,"+
-                " FOREIGN KEY(course_id) REFERENCES t_course(simple_name)"+
-                ");";
+                    "id Integer primary key AUTOINCREMENT,"+
+                    "word char(20) not null,"+
+                    "course_id char(3) not null,"+
+                    " FOREIGN KEY(course_id) REFERENCES t_course(simple_name)"+
+                    ");";
         db.execSQL(word_content_sql);
         String daily_exercise_sql = "create table if not exists t_daily_exercise( " +
-                "id Integer PRIMARY KEY AUTOINCREMENT,"+
-                "grade int(3) NOT NULL,"+
-                "exe_time char(20) NOT NULL,"+
-                "user_name char(15) NOT NULL,"+
-                "course_id char(3) NOT NULL,"+
-                "b_class Integer NOT NULL,"+
-                "b_start_time char(20) NOT NULL"+
-                ");";
+                    "id Integer PRIMARY KEY AUTOINCREMENT,"+
+                    "grade int(3) NOT NULL,"+
+                    "exe_time char(20) NOT NULL,"+
+                    "user_name char(15) NOT NULL,"+
+                    "course_id char(3) NOT NULL,"+
+                    "b_class Integer NOT NULL,"+
+                    "b_start_time char(20) NOT NULL"+
+                    ");";
         db.execSQL(daily_exercise_sql);
     }
 
@@ -59,6 +66,7 @@ public class DataHelper extends SQLiteOpenHelper {
      * @return
      */
     public boolean addUser(UserBean user,int status){
+        SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("uid",user.getUid());
         values.put("pwd",user.getPwd());
@@ -68,7 +76,6 @@ public class DataHelper extends SQLiteOpenHelper {
         values.put("avatar",user.getAvatar());
         values.put("top_grade",user.getTop_grade());
         values.put("status",status);
-        SQLiteDatabase db = getWritableDatabase();
         long insert = db.insert("t_user", null, values);
         return insert>0;
     }
@@ -80,6 +87,7 @@ public class DataHelper extends SQLiteOpenHelper {
      * @return
      */
     public boolean updateUser(UserBean user,int status){
+        SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("uid",user.getUid());
         values.put("pwd",user.getPwd());
@@ -89,7 +97,6 @@ public class DataHelper extends SQLiteOpenHelper {
         values.put("avatar",user.getAvatar());
         values.put("top_grade",user.getTop_grade());
         values.put("status",status);
-        SQLiteDatabase db = getWritableDatabase();
         int update = db.update("t_user", values,"user_name=?",new String[]{user.getUser_name()});
         return update>0;
     }
@@ -101,9 +108,9 @@ public class DataHelper extends SQLiteOpenHelper {
      * @return
      */
     public boolean updateStatus(int status,String user_name){
+        SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("status",status);
-        SQLiteDatabase db = getWritableDatabase();
         int update = db.update("t_user", values, "user_name=?", new String[]{user_name});
         return update>0;
     }
@@ -112,18 +119,18 @@ public class DataHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         String sql = "select * from t_user where status=1";
         Cursor cursor = db.rawQuery(sql, null);
-        while (cursor.moveToNext()){
-            String uid = cursor.getString(cursor.getColumnIndex("uid"));
-            String pwd = cursor.getString(cursor.getColumnIndex("pwd"));
-            String user_name = cursor.getString(cursor.getColumnIndex("user_name"));
-            int sex = cursor.getInt(cursor.getColumnIndex("sex"));
-            int b_class = cursor.getInt(cursor.getColumnIndex("b_class"));
-            String avatar = cursor.getString(cursor.getColumnIndex("avatar"));
-            int top_grade = cursor.getInt(cursor.getColumnIndex("top_grade"));
-            int status = cursor.getInt(cursor.getColumnIndex("status"));
-            UserBean user = new UserBean(uid,pwd,user_name,sex,b_class,top_grade,avatar);
-            return user;
-        }
+            while (cursor.moveToNext()){
+                String uid = cursor.getString(cursor.getColumnIndex("uid"));
+                String pwd = cursor.getString(cursor.getColumnIndex("pwd"));
+                String user_name = cursor.getString(cursor.getColumnIndex("user_name"));
+                int sex = cursor.getInt(cursor.getColumnIndex("sex"));
+                int b_class = cursor.getInt(cursor.getColumnIndex("b_class"));
+                String avatar = cursor.getString(cursor.getColumnIndex("avatar"));
+                int top_grade = cursor.getInt(cursor.getColumnIndex("top_grade"));
+                int status = cursor.getInt(cursor.getColumnIndex("status"));
+                UserBean user = new UserBean(uid,pwd,user_name,sex,b_class,top_grade,avatar);
+                return user;
+            }
         return null;
     }
 
@@ -153,6 +160,7 @@ public class DataHelper extends SQLiteOpenHelper {
      * @return
      */
     public boolean addExerciseGrade(ExerciseBean user, int status){
+        SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("grade",user.getGrade());
         values.put("exe_time",user.getExe_tiem());
@@ -160,10 +168,62 @@ public class DataHelper extends SQLiteOpenHelper {
         values.put("course_id",user.getCourse_id());
         values.put("b_class",user.getB_class());
         values.put("b_start_time",user.getStart_time());
-        SQLiteDatabase db = getWritableDatabase();
         long insert = db.insert("t_daily_exercise", null, values);
         return insert>0;
     }
 
+    public ArrayList<WordContentBean> getWords(String course_id){
+        SQLiteDatabase db = getReadableDatabase();
+        ArrayList<WordContentBean> wordList = new ArrayList<>();
+        WordContentBean word = null;
+        int max = getWordCount(course_id);
+        Random r = new Random();
+        int start = r.nextInt(max-4);
+        if (start<0)
+            start = start+4;
+        Log.e("data", "getWords: "+start );
+        String sql = "select * from t_words_content where course_id=? limit "+start+","+4;
+        Log.e("data", "getWords: "+sql );
+        Cursor cursor = db.rawQuery(sql, new String[]{course_id});
+        while (cursor.moveToNext()){
+            word = new WordContentBean();
+            word.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            word.setWord(cursor.getString(cursor.getColumnIndex("word")));
+            word.setCourse_id(cursor.getString(cursor.getColumnIndex("course_id")));
+            wordList.add(word);
+        }
+        return wordList;
+    }
 
+    public int getWordCount(String course_id){
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT count(*) as count from t_words_content WHERE course_id=? ";
+        Cursor cursor = db.rawQuery(sql,new String[]{course_id});
+        while (cursor.moveToNext()){
+            return cursor.getInt(cursor.getColumnIndex("count"));
+        }
+        return 0;
+    }
+
+    public boolean addWord(ArrayList<WordContentBean> wordList){
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        for (WordContentBean bean:wordList){
+            ContentValues values = new ContentValues();
+            values.put("word",bean.getWord());
+            values.put("course_id",bean.getCourse_id());
+            db.insert("t_words_content", null, values);
+            return true;
+        }
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        return false;
+    }
+
+    private void cleanData(String tableName) {
+        SQLiteDatabase db = getWritableDatabase();
+        String sql = "delete from "+tableName+";" +
+                "update sqlite_sequence SET seq = 0 where name ='"+tableName+"';";
+        db.execSQL(sql);
+    }
 }
