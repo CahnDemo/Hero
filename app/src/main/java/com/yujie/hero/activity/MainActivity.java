@@ -409,11 +409,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.getTenGrades) {
             getTenGrades();
         } else if (id == R.id.getClassSort) {
-
-        } else if (id == R.id.getCourseSort) {
-
-        } else if (id == R.id.getTimeSort) {
-
+            startActivity(new Intent(mContext,ShowSortActivity.class));
         } else if (id == R.id.startExam) {
 
         } else if (id == R.id.startExercise) {

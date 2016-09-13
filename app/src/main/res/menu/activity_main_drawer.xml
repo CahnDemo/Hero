@@ -9,15 +9,7 @@
         <item
             android:id="@+id/getClassSort"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="查看我的班级排名" />
-        <item
-            android:id="@+id/getCourseSort"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="查看我的学科排名" />
-        <item
-            android:id="@+id/getTimeSort"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="查看我的同期排名" />
+            android:title="查看我的排名" />
     </group>
 
     <item android:title="考试＆练习">
