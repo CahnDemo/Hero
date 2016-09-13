@@ -207,17 +207,24 @@ public class DataHelper extends SQLiteOpenHelper {
 
     public boolean addWord(ArrayList<WordContentBean> wordList){
         SQLiteDatabase db = getWritableDatabase();
+        int i = 0;
         db.beginTransaction();
         for (WordContentBean bean:wordList){
             ContentValues values = new ContentValues();
             values.put("word",bean.getWord());
             values.put("course_id",bean.getCourse_id());
-            db.insert("t_words_content", null, values);
-            return true;
+            long l = db.insert("t_words_content", null, values);
+            if (l>0)
+                i++;
         }
         db.setTransactionSuccessful();
         db.endTransaction();
-        return false;
+        if (i == wordList.size()){
+            db.close();
+            return true;
+        }
+        return true;
+
     }
 
     private void cleanData(String tableName) {

@@ -6,8 +6,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.yujie.hero.HeroApplication;
 import com.yujie.hero.I;
 import com.yujie.hero.R;
@@ -34,10 +38,16 @@ import com.yujie.hero.bean.ExerciseBean;
 import com.yujie.hero.bean.UserBean;
 import com.yujie.hero.bean.WordContentBean;
 import com.yujie.hero.db.DataHelper;
+import com.yujie.hero.listener.OnSetAvatarListener;
+import com.yujie.hero.utils.FileUtils;
 import com.yujie.hero.utils.OkHttpUtils;
 import com.yujie.hero.utils.Utils;
 import com.yujie.hero.view.CircleTextImageView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,15 +84,16 @@ public class MainActivity extends AppCompatActivity
     /** student's grades*/
     ArrayList<ExerciseBean> stuGrades;
 
+    /** the chart's area*/
     private TextView noJoinTxt;
     private ImageView noJoinImg;
     private ComboLineColumnChartView chart;
     private ComboLineColumnChartData data;
-
+    /** chart setting*/
     private int numberOfLines = 1;
     private int maxNumberOfLines = 1;
     private int numberOfPoints = 0;
-
+    /** chart data array*/
     int[][] randomNumbersTab;
 
     private boolean hasAxes = true;
@@ -91,6 +102,9 @@ public class MainActivity extends AppCompatActivity
     private boolean hasLines = true;
     private boolean isCubic = true;
     private boolean hasLabels = true;
+
+    /** select avatar*/
+    private OnSetAvatarListener listener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +116,29 @@ public class MainActivity extends AppCompatActivity
         initNavigationView();
         initData();
         initChart();
+        initAvatarListener();
+    }
+
+    /**
+     * pick avatar listener
+     */
+    private void initAvatarListener() {
+        userAvatar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener = new OnSetAvatarListener(MainActivity.this,R.id.drawer_layout,
+                        currentUser.getUid(),"user_avatar",currentUser.getUid());
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode==RESULT_CANCELED){
+            return;
+        }
+        listener.setAvatar(requestCode,data,userAvatar);
     }
 
     /**
@@ -258,10 +295,7 @@ public class MainActivity extends AppCompatActivity
         View headerView = navigationView.getHeaderView(0);
         /** user avatar*/
         userAvatar = (CircleTextImageView) headerView.findViewById(R.id.userAvatar);
-        Picasso.with(this).load(HeroApplication.AVATAR_ROOT+currentUser.getAvatar())
-                .placeholder(R.mipmap.app_icon)
-                .error(R.drawable.ic_menu_camera)
-                .into(userAvatar);
+        showAvatar(HeroApplication.AVATAR_ROOT+currentUser.getAvatar(),userAvatar);
         /** userName*/
         userName = (TextView) headerView.findViewById(R.id.userName);
         userName.setText(currentUser.getUser_name());
@@ -280,6 +314,49 @@ public class MainActivity extends AppCompatActivity
                     public void onSuccess(String result) {
                         if (result!=null){
                             userClass.setText(result);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    /**
+     * download avatar and show avatar
+     * @param url
+     * @param userAvatar
+     */
+    private void showAvatar(String url, final CircleTextImageView userAvatar) {
+        OkHttpUtils<Bitmap> utils = new OkHttpUtils<>();
+        Log.e(TAG, "showAvatar: "+url );
+        utils.url(url)
+                .downloadFile()
+                .execute(new OkHttpUtils.OnCompleteListener<Bitmap>() {
+                    @Override
+                    public void onSuccess(Bitmap result) {
+                        File file = FileUtils.getAvatarPath(MainActivity.this,"user_avatar", currentUser.getUid() + ".jpg");
+                        if(result!=null){
+                            userAvatar.setImageBitmap(result);
+                            if(!file.getParentFile().exists()){
+                                return ;
+                            }
+                            FileOutputStream out = null;
+                            try {
+                                out = new FileOutputStream(file);
+                                result.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                                Log.i(TAG, "头像保存失败");
+                            }
+                        }else {
+                            if (file.exists()){
+                                userAvatar.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                            }else {
+                                userAvatar.setImageDrawable(getResources().getDrawable(R.mipmap.app_icon));
+                            }
                         }
                     }
 

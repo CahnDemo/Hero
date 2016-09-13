@@ -17,6 +17,9 @@ public class I {
 		public static final String REQUEST_GETNEARLYGRADES = "getNearlyGradeByUid";
 		public static final String REQUEST_GET_TEN_GRADES = "getTenGrade";
 		public static final String REQUEST_DOWNLOAD_CONTENT = "getWordContent";
+		public static final String REQUEST_UPDATE_BEST_GRADE = "uploadBestGrade	";
+		public static final String REQUEST_ADD_EXERCISE_GRADE = "addExercise";
+		public static final String REQUEST_UPLOAD_AVATAR = "upload_avatar";
 	}
 
 	public interface User{

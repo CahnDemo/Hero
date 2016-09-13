@@ -20,12 +20,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.yujie.hero.HeroApplication;
+import com.yujie.hero.I;
 import com.yujie.hero.R;
+import com.yujie.hero.bean.Result;
 import com.yujie.hero.bean.UserBean;
 import com.yujie.hero.bean.WordContentBean;
 import com.yujie.hero.db.DataHelper;
+import com.yujie.hero.utils.MCountDownTimer;
+import com.yujie.hero.utils.OkHttpUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -74,8 +80,21 @@ public class GameActivity extends AppCompatActivity {
         return super.onKeyDown(keyCode, event);
     }
 
+    /**
+     * listen the editTextview's change,if you input first,the game will start,
+     * then if your word that inputed is same to textview,the order will append
+     * to edittext,else delete and brief error.(the char's position must be same
+     * to textview's word's position)
+     */
     private void initEditListener() {
         editContent.addTextChangedListener(new TextWatcher() {
+            /**
+             * when keypress,game start
+             * @param s
+             * @param start
+             * @param count
+             * @param after
+             */
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 if(!isBegan){
@@ -89,6 +108,11 @@ public class GameActivity extends AppCompatActivity {
 
             }
 
+            /**
+             * if the content's length > 0,and the same position char is identical,
+             * allow the char append to edittext,else delete and brief error to user interface
+             * @param s
+             */
             @Override
             public void afterTextChanged(Editable s) {
                 if (s.length() > 0) {
@@ -108,6 +132,10 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * get the words from local database and format to a string
+     * @param course_simple_name
+     */
     private void initWordContent(String course_simple_name) {
         ArrayList<WordContentBean> words = new DataHelper(this).getWords(course_simple_name);
         Log.e(TAG, "initWordContent: "+words.size() );
@@ -119,6 +147,10 @@ public class GameActivity extends AppCompatActivity {
         wordContent.setText(contentTxt);
     }
 
+    /**
+     * init the title,and init the timer,the wordContent TextView will get the words from local database,
+     * then add it to interface
+     */
     private void initTitle() {
         String action_code = getIntent().getStringExtra("action_code");
         if (action_code!=null){
@@ -138,20 +170,39 @@ public class GameActivity extends AppCompatActivity {
     /**
      * 倒计时计时器
      */
-    class MyCountTimer extends CountDownTimer{
+    class MyCountTimer extends MCountDownTimer {
         public MyCountTimer(long millisInFuture, long countDownInterval) {
             super(millisInFuture, countDownInterval);
         }
 
+        /**
+         * when the timer tick,reckon the speed and show it on textview
+         * @param millisUntilFinished
+         */
         @Override
         public void onTick(long millisUntilFinished) {
-            long l = millisUntilFinished / 1000;
-            timer.setText(""+l);
-            currentSpeed.setText((int)(((float)keyCount/((Integer.parseInt(time)*60)-l))*60)+"");
+            /**
+             * here is a important problem,when the activity is finished,but the timer not,
+             * it is always run,so when you go into the gameview again,the app will cash,
+             * so I add a lock,if current activity is finished,the timer is also killed;
+             */
+            if (GameActivity.this.isFinishing()){
+                mc.cancel();
+            }else {
+                long l = millisUntilFinished / 1000;
+                timer.setText(""+l);
+                currentSpeed.setText((int)(((float)keyCount/((Integer.parseInt(time)*60)-l))*60)+"");
+            }
         }
 
+        /**
+         * when the timer is finish,end the contest,and brief the user about the grade,
+         * if currentSpeed is better than currentuser's best grade,update the top grade,
+         * but no matter whether the result is better, will be upload to server
+         */
         @Override
         public void onFinish() {
+
             isBegan = false;
             editContent.setEnabled(false);
             final String speed = currentSpeed.getText().toString();
@@ -161,7 +212,7 @@ public class GameActivity extends AppCompatActivity {
                 dialog = new AlertDialog.Builder(mContext)
                         .setTitle("result")
                         .setMessage("your current speed is "+speed+", you win yourself!")
-                        .setPositiveButton("Go again", new DialogInterface.OnClickListener() {
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 editContent.setEnabled(true);
@@ -170,6 +221,8 @@ public class GameActivity extends AppCompatActivity {
                                 timer.setText(""+Integer.parseInt(time)*60);
                                 currentUser.setTop_grade(Integer.parseInt(speed));
                                 new DataHelper(mContext).updateUser(currentUser,1);
+                                uploadGrade(currentUser,speed);
+                                finish();
                             }
                         })
                         .create();
@@ -192,12 +245,13 @@ public class GameActivity extends AppCompatActivity {
                 dialog = new AlertDialog.Builder(mContext)
                         .setTitle("result")
                         .setMessage("your current speed is "+speed+", you should try again to challenge yourself!")
-                        .setPositiveButton("Go again", new DialogInterface.OnClickListener() {
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 editContent.setEnabled(true);
                                 keyCount = 0;
                                 timer.setText(""+Integer.parseInt(time)*60);
+                                finish();
                             }
                         })
                         .create();
@@ -217,9 +271,73 @@ public class GameActivity extends AppCompatActivity {
                 });
                 dialog.show();
             }
+            addGradeToServer(currentUser,speed);
         }
 
 
+    }
+
+    /**
+     * upload the exercise grade to server
+     * @param currentUser
+     * @param speed
+     */
+    private void addGradeToServer(UserBean currentUser, String speed) {
+        Date nowTime = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd");
+        String nowDate = sdFormatter.format(nowTime);
+        OkHttpUtils<Result> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXERCISE_GRADE)
+                .addParam(I.Exercise.GRADE,speed)
+                .addParam(I.Exercise.EXE_TIME,nowDate)
+                .addParam(I.Exercise.COURSE_ID,course_simple_name)
+                .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
+                .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
+                .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,6))
+                .post()
+                .targetClass(Result.class)
+                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                    @Override
+                    public void onSuccess(Result result) {
+                        if (result!=null & result.isFlag()){
+                            Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    /**
+     * upload the best grade to server
+     * @param currentUser
+     * @param speed
+     */
+    private void uploadGrade(UserBean currentUser, String speed) {
+        OkHttpUtils<Result> utils = new OkHttpUtils();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_UPDATE_BEST_GRADE)
+                .addParam(I.User.UID,currentUser.getUid())
+                .addParam(I.User.TOP_GRADE,speed+"")
+                .post()
+                .targetClass(Result.class)
+                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                    @Override
+                    public void onSuccess(Result result) {
+                        if (result!=null & result.isFlag()){
+                            Toast.makeText(GameActivity.this,"you top_grade have updated!",Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Toast.makeText(GameActivity.this,"No Internet connected....pleast try again later",Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
 }

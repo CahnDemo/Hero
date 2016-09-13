@@ -1,5 +1,7 @@
 package com.yujie.hero.utils;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -18,6 +20,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -98,7 +101,11 @@ public class OkHttpUtils<T> {
      * 用于json解析的类对象
      */
     Class<T> mClazz;
-
+    boolean downloadBitmap = false;
+    public OkHttpUtils<T> downloadFile(){
+        downloadBitmap = true;
+        return this;
+    }
     /**
      * 设置json解析的类对象
      *
@@ -157,19 +164,29 @@ public class OkHttpUtils<T> {
             public void onFailure(Request request, IOException e) {
                 Message msg = Message.obtain();
                 msg.what = RESULT_ERROR;
-                msg.obj = e.getMessage();
+                msg.obj = request.body()+e.getMessage();
                 mHandler.sendMessage(msg);
             }
 
             @Override
             public void onResponse(Response response) throws IOException {
-                String json = response.body().string();
-                ObjectMapper om = new ObjectMapper();
-                T value = om.readValue(json, mClazz);
-                Message msg = Message.obtain();
-                msg.what = RESULT_SUCCESS;
-                msg.obj = value;
-                mHandler.sendMessage(msg);
+                if (downloadBitmap){
+                    InputStream stream = response.body().byteStream();
+                    Bitmap value = BitmapFactory.decodeStream(stream);
+                    Log.e(TAG, "onResponse: "+stream +"\n"+value);
+                    Message msg = Message.obtain();
+                    msg.what = RESULT_SUCCESS;
+                    msg.obj = value;
+                    mHandler.sendMessage(msg);
+                }else {
+                    String json = response.body().string();
+                    ObjectMapper om = new ObjectMapper();
+                    T value = om.readValue(json, mClazz);
+                    Message msg = Message.obtain();
+                    msg.what = RESULT_SUCCESS;
+                    msg.obj = value;
+                    mHandler.sendMessage(msg);
+                }
             }
         });
     }
