@@ -294,7 +294,7 @@ public class GameActivity extends AppCompatActivity {
                 .addParam(I.Exercise.COURSE_ID,course_simple_name)
                 .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
                 .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
-                .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,6))
+                .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,7))
                 .post()
                 .targetClass(Result.class)
                 .execute(new OkHttpUtils.OnCompleteListener<Result>() {

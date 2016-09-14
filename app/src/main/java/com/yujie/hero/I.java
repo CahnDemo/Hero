@@ -20,6 +20,9 @@ public class I {
 		public static final String REQUEST_UPDATE_BEST_GRADE = "uploadBestGrade	";
 		public static final String REQUEST_ADD_EXERCISE_GRADE = "addExercise";
 		public static final String REQUEST_UPLOAD_AVATAR = "upload_avatar";
+		public static final String REQUEST_GET_SORT_IN_CLASS = "getSortInClass";
+		public static final String REQUEST_GET_SORT_IN_COURSE = "getSortInCourse";
+		public static final String REQUEST_GET_SORT_IN_TIME = "getSortInTime";
 	}
 
 	public interface User{
