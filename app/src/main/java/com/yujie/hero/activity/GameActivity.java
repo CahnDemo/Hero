@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -226,7 +227,12 @@ public class GameActivity extends AppCompatActivity {
                                 currentUser.setTop_grade(Integer.parseInt(speed));
                                 new DataHelper(mContext).updateUser(currentUser,1);
                                 uploadGrade(currentUser,speed);
-                                finish();
+                                if (code.equals(HeroApplication.EXAM_CODE)){
+                                    startActivity(new Intent(mContext,ExamResultActivity.class));
+                                    finish();
+                                }else {
+                                    finish();
+                                }
                             }
                         })
                         .create();
@@ -255,7 +261,12 @@ public class GameActivity extends AppCompatActivity {
                                 editContent.setEnabled(true);
                                 keyCount = 0;
                                 timer.setText(""+Integer.parseInt(time)*60);
-                                finish();
+                                if (code.equals(HeroApplication.EXAM_CODE)){
+                                    startActivity(new Intent(mContext,ExamResultActivity.class));
+                                    finish();
+                                }else {
+                                    finish();
+                                }
                             }
                         })
                         .create();
@@ -317,7 +328,7 @@ public class GameActivity extends AppCompatActivity {
                     });
         }else if (code.equals(HeroApplication.EXAM_CODE)){
             Date nowTime = new Date(System.currentTimeMillis());
-            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd HH-mm");
+            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
             String nowDate = sdFormatter.format(nowTime);
             OkHttpUtils<Result> utils = new OkHttpUtils<>();
             utils.url(HeroApplication.SERVER_ROOT)
@@ -335,13 +346,13 @@ public class GameActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(Result result) {
                             if (result!=null & result.isFlag()){
-                                Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
+                                Toast.makeText(GameActivity.this,"grade is uploaded...",Toast.LENGTH_LONG).show();
                             }
                         }
 
                         @Override
                         public void onError(String error) {
-                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_LONG).show();
+                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_SHORT).show();
                         }
                     });
         }

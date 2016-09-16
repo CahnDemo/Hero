@@ -21,7 +21,8 @@
         android:text="最近的十次成绩"
         android:textAlignment="center"
         android:textColor="#000"
-        android:textSize="35dp"
+        android:id="@+id/gradeOfUser"
+        android:textSize="28dp"
         app:layout_marginTopPercent="3%"
         />
     <lecho.lib.hellocharts.view.LineChartView

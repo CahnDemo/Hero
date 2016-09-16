@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.yujie.hero.HeroApplication;
@@ -37,6 +38,8 @@ import lecho.lib.hellocharts.view.LineChartView;
 
 public class SortCourseFragment extends Fragment {
     public static final String TAG = SortCourseFragment.class.getSimpleName();
+    @Bind(R.id.gradeOfUser)
+    TextView gradeOfUser;
     private Context mContext;
     @Bind(R.id.dataRecyclerView)
     RecyclerView dataRecyclerView;
@@ -79,12 +82,13 @@ public class SortCourseFragment extends Fragment {
         resetViewport();
         return view;
     }
+
     private void initListener() {
         dataLineChartView.setViewportCalculationEnabled(false);
         dataLineChartView.setOnValueTouchListener(new LineChartOnValueSelectListener() {
             @Override
             public void onValueSelected(int i, int i1, PointValue pointValue) {
-                Toast.makeText(mContext,personData.get(i1).getExe_tiem(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, personData.get(i1).getExe_tiem(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -106,10 +110,10 @@ public class SortCourseFragment extends Fragment {
 
     private void prepareDataAnimation(ArrayList<ExerciseBean> personData) {
         for (Line line : data.getLines()) {
-            for (int i=0;i<numberOfPoints;i++){
+            for (int i = 0; i < numberOfPoints; i++) {
                 PointValue value = line.getValues().get(i);
-                Log.e(TAG, "prepareDataAnimation: "+value.getX());
-                value.setTarget(i,personData.get(i).getGrade());
+                Log.e(TAG, "prepareDataAnimation: " + value.getX());
+                value.setTarget(i, personData.get(i).getGrade());
             }
         }
     }
@@ -138,7 +142,7 @@ public class SortCourseFragment extends Fragment {
         for (int i = 0; i < numberOfLines; ++i) {
             List<PointValue> values = new ArrayList<PointValue>();
             for (int j = 0; j < numberOfPoints; ++j) {
-                values.add(new PointValue(j,personData.get(j).getGrade()));
+                values.add(new PointValue(j, personData.get(j).getGrade()));
             }
 
             Line line = new Line(values);
@@ -150,7 +154,7 @@ public class SortCourseFragment extends Fragment {
             line.setHasLabelsOnlyForSelected(hasLabelForSelected);
             line.setHasLines(hasLines);
             line.setHasPoints(hasPoints);
-            if (pointsHaveDifferentColor){
+            if (pointsHaveDifferentColor) {
                 line.setPointColor(ChartUtils.COLORS[(i + 1) % ChartUtils.COLORS.length]);
             }
             lines.add(line);
@@ -176,10 +180,12 @@ public class SortCourseFragment extends Fragment {
         dataLineChartView.setLineChartData(data);
 
     }
+
     private void initAdapter() {
         adapter.setListener(new RecycleAdapter.OnItemClickListener() {
             @Override
             public void onItemClickListener(View v, int position, ExerciseBean item) {
+                gradeOfUser.setText(item.getUser_name()+"最近的练习成绩");
                 initPersonData(item);
             }
         });
@@ -188,25 +194,27 @@ public class SortCourseFragment extends Fragment {
     private void initPersonData(ExerciseBean item) {
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils();
         utils.url(HeroApplication.SERVER_ROOT)
-                .addParam(I.REQUEST,I.Request.REQUEST_GETNEARLYGRADES)
-                .addParam(I.User.USER_NAME,item.getUser_name())
+                .addParam(I.REQUEST, I.Request.REQUEST_GETNEARLYGRADES)
+                .addParam(I.User.USER_NAME, item.getUser_name())
                 .targetClass(ExerciseBean[].class)
                 .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
                     @Override
                     public void onSuccess(ExerciseBean[] result) {
-                        if (result!=null & result.length!=0){
-                            if (numberOfPoints==result.length){
+                        if (result != null & result.length != 0) {
+                            if (numberOfPoints == result.length) {
                                 personData.clear();
                                 personData.addAll(Utils.array2List(result));
                                 prepareDataAnimation(personData);
                                 dataLineChartView.startDataAnimation();
-                            }else {
+                            } else {
                                 numberOfPoints = result.length;
                                 personData.clear();
                                 personData.addAll(Utils.array2List(result));
                                 reset();
                                 generateData();
                             }
+                        } else {
+                            Toast.makeText(mContext, "the student have no exercise data", Toast.LENGTH_LONG).show();
                         }
                     }
 
@@ -220,21 +228,21 @@ public class SortCourseFragment extends Fragment {
     private void initData() {
         grades = new ArrayList<>();
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
-        Log.e(TAG, "initData: "+HeroApplication.getInstance().getCurrentUser().getUid().substring(0,1) );
+        Log.e(TAG, "initData: " + HeroApplication.getInstance().getCurrentUser().getUid().substring(0, 1));
         utils.url(HeroApplication.SERVER_ROOT)
-                .addParam(I.REQUEST,I.Request.REQUEST_GET_SORT_IN_COURSE)
-                .addParam(I.Exercise.COURSE_ID,HeroApplication.getInstance().getCurrentUser().getUid().substring(0,1))
+                .addParam(I.REQUEST, I.Request.REQUEST_GET_SORT_IN_COURSE)
+                .addParam(I.Exercise.COURSE_ID, HeroApplication.getInstance().getCurrentUser().getUid().substring(0, 1))
                 .targetClass(ExerciseBean[].class)
                 .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
                     @Override
                     public void onSuccess(ExerciseBean[] result) {
-                        if (result!=null){
+                        if (result != null) {
                             grades = Utils.array2List(result);
-                            adapter = new RecycleAdapter(mContext,grades);
-                            manager = new LinearLayoutManager(mContext,LinearLayoutManager.VERTICAL,false);
+                            adapter = new RecycleAdapter(mContext, grades);
+                            manager = new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false);
                             dataRecyclerView.setLayoutManager(manager);
                             dataRecyclerView.setAdapter(adapter);
-                            if (grades.size()==0 | grades==null){
+                            if (grades.size() == 0 | grades == null) {
                                 return;
                             }
                             initChart(grades);
@@ -253,13 +261,13 @@ public class SortCourseFragment extends Fragment {
         personData = new ArrayList<>();
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
         utils.url(HeroApplication.SERVER_ROOT)
-                .addParam(I.REQUEST,I.Request.REQUEST_GETNEARLYGRADES)
-                .addParam(I.User.USER_NAME,grades.get(0).getUser_name())
+                .addParam(I.REQUEST, I.Request.REQUEST_GETNEARLYGRADES)
+                .addParam(I.User.USER_NAME, grades.get(0).getUser_name())
                 .targetClass(ExerciseBean[].class)
                 .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
                     @Override
                     public void onSuccess(ExerciseBean[] result) {
-                        if (result!=null & result.length!=0){
+                        if (result != null & result.length != 0) {
                             numberOfPoints = result.length;
                             personData = Utils.array2List(result);
                             reset();

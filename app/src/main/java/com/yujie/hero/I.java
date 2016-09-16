@@ -25,6 +25,7 @@ public class I {
 		public static final String REQUEST_GET_SORT_IN_TIME = "getSortInTime";
 		public static final String REQUEST_ADD_EXAM_GRADE = "addExamGrade";
 		public static final String REQUEST_GET_EXAM_NOW = "getExamNow";
+		public static final String REQUEST_GET_EXAM_GRADE = "getExamGrade";
 	}
 
 	public interface User{
