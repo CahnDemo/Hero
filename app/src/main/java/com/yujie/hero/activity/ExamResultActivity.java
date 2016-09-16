@@ -1,0 +1,15 @@
+package com.yujie.hero.activity;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+import com.yujie.hero.R;
+
+public class ExamResultActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_exam_result);
+    }
+}

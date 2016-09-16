@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.net.Inet4Address;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -427,11 +428,28 @@ public class MainActivity extends AppCompatActivity
             goExam();
         } else if (id == R.id.startExercise) {
             goExercise();
+        }else if (id == R.id.logout){
+            logout();
+        }else if (id == R.id.point){
+            
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * logout and clear the userData,update the user login status to 0
+     */
+    private void logout() {
+        new DataHelper(mContext).updateStatus(0,currentUser.getUser_name());
+        HeroApplication.getInstance().setCURRENT_EXAM_ID(0);
+        HeroApplication.getInstance().setCurrentTestCourse(null);
+        HeroApplication.getInstance().setCurrentUser(null);
+        Intent intent = new Intent(mContext,LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     /**

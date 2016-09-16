@@ -24,5 +24,18 @@
                 android:title="进入练习" />
         </menu>
     </item>
+    <item android:title="@string/action_settings">
+        <menu>
+            <item
+                android:id="@+id/logout"
+                android:title="logout"
+                android:icon="@drawable/logout"
+                />
+            <item
+                android:id="@id/point"
+                android:title="reset login password"
+                android:icon="@drawable/reset_pwd"/>
+        </menu>
+    </item>
 
 </menu>
