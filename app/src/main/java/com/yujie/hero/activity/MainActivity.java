@@ -34,6 +34,7 @@ import com.squareup.picasso.Target;
 import com.yujie.hero.HeroApplication;
 import com.yujie.hero.I;
 import com.yujie.hero.R;
+import com.yujie.hero.bean.ExamBean;
 import com.yujie.hero.bean.ExerciseBean;
 import com.yujie.hero.bean.UserBean;
 import com.yujie.hero.bean.WordContentBean;
@@ -105,6 +106,10 @@ public class MainActivity extends AppCompatActivity
 
     /** select avatar*/
     private OnSetAvatarListener listener;
+
+    /** Current exam which is testing array**/
+    ArrayList<ExamBean> nowExam;
+    String[] examArray;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,6 +122,14 @@ public class MainActivity extends AppCompatActivity
         initData();
         initChart();
         initAvatarListener();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initData();
+        initChart();
     }
 
     /**
@@ -411,45 +424,110 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.getClassSort) {
             startActivity(new Intent(mContext,ShowSortActivity.class));
         } else if (id == R.id.startExam) {
-
+            goExam();
         } else if (id == R.id.startExercise) {
-            String[] time = new String[]{"1分钟","3分钟","5分钟","10分钟"};
-            String[] course = new String[]{"Android","IOS","PHP","H5"};
-            View view = LayoutInflater.from(this).inflate(R.layout.dialog_chose,null);
-            final Spinner choseDialogSpinnerTime = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_time);
-            final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
-            initSpinner(choseDialogSpinnerCourse, choseDialogSpinnerTime,time,course);
-            Dialog dialog = new AlertDialog.Builder(this)
-                    .setTitle("chose time and course")
-                    .setView(view)
-                    .setNegativeButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            String course = choseDialogSpinnerCourse.getSelectedItem().toString();
-                            HeroApplication.getInstance().setCurrentTestCourse(course);
-                            String course_simpleName = course.substring(0,1).toLowerCase();
-                            String time = choseDialogSpinnerTime.getSelectedItem().toString().substring(0,2);
-                            if (time.substring(1,2).equals("分")){
-                                time = time.substring(0,1);
-                            }
-                            if(new DataHelper(mContext).getWordCount(course_simpleName)==0){
-                                Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_LONG).show();
-                                pd.show();
-                                downloadContent(course_simpleName,time);
-                            }else {
-                                Intent intent = new Intent(mContext,GameActivity.class);
-                                intent.putExtra("action_code",course_simpleName+time);
-                                startActivity(intent);
-                            }
-                        }
-                    })
-                    .create();
-            dialog.show();
+            goExercise();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * go GameActivity with exam
+     */
+    private void goExam() {
+        OkHttpUtils<ExamBean[]> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_GET_EXAM_NOW)
+                .targetClass(ExamBean[].class)
+                .execute(new OkHttpUtils.OnCompleteListener<ExamBean[]>() {
+                    @Override
+                    public void onSuccess(ExamBean[] result) {
+                        if (result!=null & result.length>0){
+                            nowExam = Utils.array2List(result);
+                            examArray = new String[nowExam.size()];
+                            for (int i=0;i<nowExam.size();i++){
+                                examArray[i] = "name: "+nowExam.get(i).getExam_name()+" course: "+
+                                        nowExam.get(i).getCourse_id()+" time: "+nowExam.get(i).getExam_time();
+                            }
+                            showExamDialog();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+    }
+
+    /**
+     * the dialog to chose exam
+     */
+    private void showExamDialog() {
+        Dialog dialog = new AlertDialog.Builder(this)
+                .setTitle("current testing exams")
+                .setItems(examArray, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ExamBean examBean = nowExam.get(which);
+                        Log.e(TAG, "onClick: "+examBean.getId() );
+                        HeroApplication.getInstance().setCURRENT_EXAM_ID(examBean.getId());
+                        if(new DataHelper(mContext).getWordCount(examBean.getCourse_id())==0){
+                            Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_SHORT).show();
+                            pd.show();
+                            downloadContent(examBean.getCourse_id(),"1");
+                        }else {
+                            Intent intent = new Intent(mContext,GameActivity.class);
+                            String action_code = examBean.getCourse_id()+","+"1"+","+HeroApplication.EXAM_CODE;
+                            intent.putExtra("action_code",action_code);
+                            startActivity(intent);
+                        }
+                    }
+                })
+                .create();
+        dialog.show();
+    }
+
+    /**
+     * go GameActivity with exercise
+     */
+    private void goExercise() {
+        String[] time = new String[]{"1分钟","3分钟","5分钟","10分钟"};
+        String[] course = new String[]{"Android","IOS","PHP","H5"};
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_chose,null);
+        final Spinner choseDialogSpinnerTime = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_time);
+        final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
+        initSpinner(choseDialogSpinnerCourse, choseDialogSpinnerTime,time,course);
+        Dialog dialog = new AlertDialog.Builder(this)
+                .setTitle("chose time and course")
+                .setView(view)
+                .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String course = choseDialogSpinnerCourse.getSelectedItem().toString();
+                        HeroApplication.getInstance().setCurrentTestCourse(course);
+                        String course_simpleName = course.substring(0,1).toLowerCase();
+                        String time = choseDialogSpinnerTime.getSelectedItem().toString().substring(0,2);
+                        if (time.substring(1,2).equals("分")){
+                            time = time.substring(0,1);
+                        }
+                        if(new DataHelper(mContext).getWordCount(course_simpleName)==0){
+                            Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_LONG).show();
+                            pd.show();
+                            downloadContent(course_simpleName,time);
+                        }else {
+                            Intent intent = new Intent(mContext,GameActivity.class);
+                            String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE;
+                            intent.putExtra("action_code",action_code);
+                            startActivity(intent);
+                        }
+                    }
+                })
+                .create();
+        dialog.show();
     }
 
     /**
@@ -466,14 +544,21 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(WordContentBean[] result) {
                         if (result!=null&result.length!=0){
-                            Log.e(TAG, "onSuccess: "+ Arrays.toString(result) );
-                            Toast.makeText(MainActivity.this,"Download finish,Now is add to local database...please wait...",Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this,"Download finish,Now is add to local database...please wait...",Toast.LENGTH_SHORT).show();
                             if (new DataHelper(mContext).addWord(Utils.array2List(result))){
                                 pd.dismiss();
-                                Toast.makeText(MainActivity.this,"add success!",Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(mContext,GameActivity.class);
-                                intent.putExtra("action_code",course_simpleName+time);
-                                startActivity(intent);
+                                Toast.makeText(MainActivity.this,"add success!",Toast.LENGTH_SHORT).show();
+                                if (HeroApplication.getInstance().getCURRENT_EXAM_ID()!=0){
+                                    Intent intent = new Intent(mContext,GameActivity.class);
+                                    String action_code = course_simpleName+","+time+","+HeroApplication.EXAM_CODE;
+                                    intent.putExtra("action_code",action_code);
+                                    startActivity(intent);
+                                }else {
+                                    Intent intent = new Intent(mContext,GameActivity.class);
+                                    String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE;
+                                    intent.putExtra("action_code",action_code);
+                                    startActivity(intent);
+                                }
                             }
                         }
 

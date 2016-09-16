@@ -310,6 +310,7 @@ public class RegisterActivity extends AppCompatActivity {
      * @param time
      */
     private void getClassList(String area, String course, String time) {
+        Log.e(TAG, "getClassList: "+area+course+time );
         OkHttpUtils<ClassObj[]> utils = new OkHttpUtils<>();
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST, I.Request.REQUEST_GET_CLASS)
@@ -352,6 +353,7 @@ public class RegisterActivity extends AppCompatActivity {
                         msg.obj = classObj;
                         mHandler.sendMessage(msg);
                         classId = classObj.getId();
+                        Log.e("yujie",classId+"");
                         classSimpleName = classObj.getSimple_name();
                     }
                 })

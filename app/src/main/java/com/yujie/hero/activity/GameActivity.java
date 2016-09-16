@@ -31,6 +31,7 @@ import com.yujie.hero.utils.OkHttpUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import butterknife.Bind;
@@ -59,6 +60,7 @@ public class GameActivity extends AppCompatActivity {
     String contentTxt;
     String course_simple_name ;
     String time;
+    String code;
     int keyCount = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,8 +156,10 @@ public class GameActivity extends AppCompatActivity {
     private void initTitle() {
         String action_code = getIntent().getStringExtra("action_code");
         if (action_code!=null){
-            course_simple_name = action_code.substring(0,1);
-            time = action_code.substring(1,action_code.length());
+            String[] action = action_code.split(",");
+            course_simple_name = action[0];
+            time = action[1];
+            code = action[2];
         }
         Log.e(TAG, "initTitle: "+time );
         mc = new MyCountTimer((Long.parseLong(time)) * 60 * 1000,1000);
@@ -283,33 +287,64 @@ public class GameActivity extends AppCompatActivity {
      * @param speed
      */
     private void addGradeToServer(UserBean currentUser, String speed) {
-        Date nowTime = new Date(System.currentTimeMillis());
-        SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd");
-        String nowDate = sdFormatter.format(nowTime);
-        OkHttpUtils<Result> utils = new OkHttpUtils<>();
-        utils.url(HeroApplication.SERVER_ROOT)
-                .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXERCISE_GRADE)
-                .addParam(I.Exercise.GRADE,speed)
-                .addParam(I.Exercise.EXE_TIME,nowDate)
-                .addParam(I.Exercise.COURSE_ID,course_simple_name)
-                .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
-                .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
-                .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,7))
-                .post()
-                .targetClass(Result.class)
-                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
-                    @Override
-                    public void onSuccess(Result result) {
-                        if (result!=null & result.isFlag()){
-                            Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
+        if (code.equals(HeroApplication.EXERCISE_CODE)){
+            Date nowTime = new Date(System.currentTimeMillis());
+            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd");
+            String nowDate = sdFormatter.format(nowTime);
+            OkHttpUtils<Result> utils = new OkHttpUtils<>();
+            utils.url(HeroApplication.SERVER_ROOT)
+                    .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXERCISE_GRADE)
+                    .addParam(I.Exercise.GRADE,speed)
+                    .addParam(I.Exercise.EXE_TIME,nowDate)
+                    .addParam(I.Exercise.COURSE_ID,course_simple_name)
+                    .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
+                    .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
+                    .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,7))
+                    .post()
+                    .targetClass(Result.class)
+                    .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                        @Override
+                        public void onSuccess(Result result) {
+                            if (result!=null & result.isFlag()){
+                                Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onError(String error) {
+                        @Override
+                        public void onError(String error) {
                             Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_LONG).show();
-                    }
-                });
+                        }
+                    });
+        }else if (code.equals(HeroApplication.EXAM_CODE)){
+            Date nowTime = new Date(System.currentTimeMillis());
+            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd HH-mm");
+            String nowDate = sdFormatter.format(nowTime);
+            OkHttpUtils<Result> utils = new OkHttpUtils<>();
+            utils.url(HeroApplication.SERVER_ROOT)
+                    .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXAM_GRADE)
+                    .addParam(I.ExamGrade.EXAM_ID,HeroApplication.getInstance().getCURRENT_EXAM_ID()+"")
+                    .addParam(I.ExamGrade.GRADE,speed)
+                    .addParam(I.ExamGrade.SUBMIT_TIME,nowDate)
+                    .addParam(I.ExamGrade.USER_NAME,currentUser.getUser_name())
+                    .addParam(I.ExamGrade.B_CLASS,currentUser.getB_class()+"")
+                    .addParam(I.ExamGrade.COURSE_ID,course_simple_name)
+                    .addParam(I.ExamGrade.B_START_TIME,currentUser.getUid().substring(1,7))
+                    .post()
+                    .targetClass(Result.class)
+                    .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                        @Override
+                        public void onSuccess(Result result) {
+                            if (result!=null & result.isFlag()){
+                                Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
+                            }
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_LONG).show();
+                        }
+                    });
+        }
     }
 
     /**
