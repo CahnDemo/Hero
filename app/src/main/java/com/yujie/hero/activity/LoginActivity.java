@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.yujie.hero.HeroApplication;
 import com.yujie.hero.I;
@@ -97,8 +98,8 @@ public class LoginActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<UserBean>() {
                     @Override
                     public void onSuccess(UserBean result) {
-                        if (result==null){
-                            return;
+                        if (result==null&result.getUid()==null){
+                            Toast.makeText(LoginActivity.this,"登陆失败，请确认您的账号或密码",Toast.LENGTH_LONG).show();
                         }else {
                             if(new DataHelper(mContext).findUserByUid(uid)!=null){
                                 if(updateData(result)){
@@ -118,10 +119,9 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "onError: "+error);
+                        Toast.makeText(LoginActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
-        Log.e(TAG, "login: "+utils.getmUrl());
     }
 
     /**

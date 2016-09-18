@@ -32,6 +32,12 @@ public class ShowSortActivity extends AppCompatActivity {
         initViewPager();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initViewPager();
+    }
+
     private void initViewPager() {
         sortViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override

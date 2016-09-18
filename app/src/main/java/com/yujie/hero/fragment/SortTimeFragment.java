@@ -112,7 +112,6 @@ public class SortTimeFragment extends Fragment {
         for (Line line : data.getLines()) {
             for (int i = 0; i < numberOfPoints; i++) {
                 PointValue value = line.getValues().get(i);
-                Log.e(TAG, "prepareDataAnimation: " + value.getX());
                 value.setTarget(i, personData.get(i).getGrade());
             }
         }
@@ -214,13 +213,13 @@ public class SortTimeFragment extends Fragment {
                                 generateData();
                             }
                         } else {
-                            Toast.makeText(mContext, "the student have no exercise data", Toast.LENGTH_LONG).show();
+                            Toast.makeText(mContext, "该学生还未进行练习", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -228,7 +227,6 @@ public class SortTimeFragment extends Fragment {
     private void initData() {
         grades = new ArrayList<>();
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
-        Log.e(TAG, "initData: " + HeroApplication.getInstance().getCurrentUser().getUid().substring(1, 7));
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST, I.Request.REQUEST_GET_SORT_IN_TIME)
                 .addParam(I.Exercise.START_TIME, HeroApplication.getInstance().getCurrentUser().getUid().substring(1, 7))
@@ -252,7 +250,7 @@ public class SortTimeFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -277,7 +275,7 @@ public class SortTimeFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }

@@ -114,7 +114,6 @@ public class ExamSortFragment extends Fragment {
         for (Line line : data.getLines()) {
             for (int i = 0; i < numberOfPoints; i++) {
                 PointValue value = line.getValues().get(i);
-                Log.e(TAG, "prepareDataAnimation: " + value.getX());
                 value.setTarget(i, personData.get(i).getGrade());
             }
         }
@@ -216,7 +215,7 @@ public class ExamSortFragment extends Fragment {
                                 generateData();
                             }
                         } else {
-                            Toast.makeText(mContext, "the student have no exercise data", Toast.LENGTH_LONG).show();
+                            Toast.makeText(mContext, "该学生还未进行练习", Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -237,7 +236,7 @@ public class ExamSortFragment extends Fragment {
                 .execute(new OkHttpUtils.OnCompleteListener<ExamResultBean[]>() {
                     @Override
                     public void onSuccess(ExamResultBean[] result) {
-                        if (result != null) {
+                        if (result != null & result.length!=0) {
                             grades = Utils.array2List(result);
                             adapter = new ExamGradeAdapter(mContext, grades);
                             manager = new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false);

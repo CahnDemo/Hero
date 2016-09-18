@@ -17,7 +17,7 @@
         app:layout_marginRightPercent="15%"
         app:layout_marginBottomPercent="15%"
         android:layout_centerHorizontal="true"
-        android:text="you havn't been tested yet"
+        android:text="你还未进行过练习"
         android:textColor="#000"
         android:textSize="40dp"
         android:textAlignment="center"

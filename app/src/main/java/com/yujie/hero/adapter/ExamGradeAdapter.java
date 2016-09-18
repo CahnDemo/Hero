@@ -68,7 +68,6 @@ public class ExamGradeAdapter extends RecyclerView.Adapter<GradeViewHolder> {
     @Override
     public void onBindViewHolder(final GradeViewHolder holder, int position) {
         final ExamResultBean item = getItem(position);
-        Log.e(TAG, "onBindViewHolder: "+position+item );
         if (position<3){
             holder.levelNumber.setVisibility(View.GONE);
             holder.levelAvatar.setVisibility(View.VISIBLE);
@@ -87,6 +86,7 @@ public class ExamGradeAdapter extends RecyclerView.Adapter<GradeViewHolder> {
             holder.levelAvatar.setVisibility(View.GONE);
             holder.levelNumber.setText((position+1)+"");
         }
+        holder.itemChallengeBtn.setVisibility(View.GONE);
         holder.itemUserName.setText(item.getUser_name());
         holder.itemUserGrade.setText(item.getGrade()+"");
         if (listener!=null){

@@ -128,17 +128,20 @@ public class RegisterActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<StartTimeBean[]>() {
                     @Override
                     public void onSuccess(StartTimeBean[] result) {
-                        Log.e(TAG, "onSuccess: " + result);
-                        timelist = Utils.array2List(result);
-                        timeStr = new ArrayList<String>();
-                        for (StartTimeBean time : timelist) {
-                            timeStr.add(time.getStart_time());
-                        }
+                       if (result!=null & result.length!=0){
+                           timelist = Utils.array2List(result);
+                           timeStr = new ArrayList<String>();
+                           for (StartTimeBean time : timelist) {
+                               timeStr.add(time.getStart_time());
+                           }
+                       }else {
+                           Toast.makeText(RegisterActivity.this,"数据获取失败，请稍后再试",Toast.LENGTH_LONG).show();
+                       }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(RegisterActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -155,19 +158,22 @@ public class RegisterActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<CourseBean[]>() {
                     @Override
                     public void onSuccess(CourseBean[] result) {
-                        Log.e(TAG, "onSuccess: " + result);
-                        courselist = Utils.array2List(result);
-                        courseMap = new HashMap<String, String>();
-                        courseStr = new ArrayList<String>();
-                        for (CourseBean courseBean : courselist) {
-                            courseMap.put(courseBean.getCourse_name(), courseBean.getSimple_name());
-                            courseStr.add(courseBean.getCourse_name());
+                        if (result!=null & result.length!=0){
+                            courselist = Utils.array2List(result);
+                            courseMap = new HashMap<String, String>();
+                            courseStr = new ArrayList<String>();
+                            for (CourseBean courseBean : courselist) {
+                                courseMap.put(courseBean.getCourse_name(), courseBean.getSimple_name());
+                                courseStr.add(courseBean.getCourse_name());
+                            }
+                        }else {
+                            Toast.makeText(RegisterActivity.this,"数据获取失败，请稍后再试",Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(RegisterActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -184,19 +190,22 @@ public class RegisterActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<AreasBean[]>() {
                     @Override
                     public void onSuccess(AreasBean[] result) {
-                        Log.e(TAG, "onSuccess: " + result);
-                        arealist = Utils.array2List(result);
-                        areaMap = new HashMap<String, String>();
-                        areaStr = new ArrayList<String>();
-                        for (AreasBean area : arealist) {
-                            areaMap.put(area.getArea_name(), area.getSimple_name());
-                            areaStr.add(area.getArea_name());
+                        if (result!=null & result.length!=0){
+                            arealist = Utils.array2List(result);
+                            areaMap = new HashMap<String, String>();
+                            areaStr = new ArrayList<String>();
+                            for (AreasBean area : arealist) {
+                                areaMap.put(area.getArea_name(), area.getSimple_name());
+                                areaStr.add(area.getArea_name());
+                            }
+                        }else {
+                            Toast.makeText(RegisterActivity.this,"数据获取失败，请稍后再试",Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "onError: " + error);
+                        Toast.makeText(RegisterActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -223,20 +232,21 @@ public class RegisterActivity extends AppCompatActivity {
         sex = registerActivityRadioButtonBoy.isChecked()?1:2;
         String stuNum = registerActivityEditTextStuNum.getText().toString();
         if(user_name.isEmpty()){
-            registerActivityEditTextInputUserName.setError("No input,please try again");
+            registerActivityEditTextInputUserName.setError("没有输入,请重试");
             registerActivityEditTextInputUserName.requestFocus();
             return;
         }
         if(passWord.isEmpty()){
-            registerActivityEditTextInputPwd.setError("No input,please try again");
+            registerActivityEditTextInputPwd.setError("没有输入,请重试");
             registerActivityEditTextInputPwd.requestFocus();
             return;
         }
         if (sex==0){
+            Toast.makeText(RegisterActivity.this,"请选择性别",Toast.LENGTH_LONG).show();
             return;
         }
         if (stuNum.isEmpty()){
-            registerActivityEditTextStuNum.setError("No input,please try again");
+            registerActivityEditTextStuNum.setError("没有输入,请重试");
             registerActivityEditTextStuNum.requestFocus();
             return;
         }
@@ -258,8 +268,7 @@ public class RegisterActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<Result>() {
                     @Override
                     public void onSuccess(Result result) {
-                        Log.e(TAG, "onSuccess: "+result );
-                        if (result!=null){
+                        if (result!=null & result.isFlag()){
                             UserBean user = new UserBean(uid,passWord,user_name,sex,classId,top_grade,null);
                             HeroApplication.getInstance().setCurrentUser(user);
                             DataHelper help = new DataHelper(mContext);
@@ -267,12 +276,14 @@ public class RegisterActivity extends AppCompatActivity {
                             Toast.makeText(RegisterActivity.this,"您的UID是: "+uid+" 已经为您自动填充",Toast.LENGTH_LONG).show();
                             startActivity(new Intent(mContext,LoginActivity.class));
                             finish();
+                        }else {
+                            Toast.makeText(RegisterActivity.this,"注册失败,该学号已被使用，请重新输入学号",Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(RegisterActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -321,7 +332,6 @@ public class RegisterActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<ClassObj[]>() {
                     @Override
                     public void onSuccess(ClassObj[] result) {
-                        Log.e(TAG, "onSuccess: " + result);
                         classlist = new ArrayList<ClassObj>();
                         classlist = Utils.array2List(result);
                         classStr = new String[classlist.size()];
@@ -333,7 +343,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(RegisterActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
 
@@ -353,7 +363,6 @@ public class RegisterActivity extends AppCompatActivity {
                         msg.obj = classObj;
                         mHandler.sendMessage(msg);
                         classId = classObj.getId();
-                        Log.e("yujie",classId+"");
                         classSimpleName = classObj.getSimple_name();
                     }
                 })

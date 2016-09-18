@@ -4,6 +4,20 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
+//    signingConfigs {
+//        release {
+//            storeFile file('release.keystore')
+//            storePassword "980804224"
+//            keyAlias "androiddebugkey"
+//            keyPassword "980804224"
+//        }
+//        debug {
+//            storeFile file('release.keystore')
+//            storePassword "980804224"
+//            keyAlias "androiddebugkey"
+//            keyPassword "980804224"
+//        }
+//    }
     defaultConfig {
         applicationId "com.yujie.hero"
         minSdkVersion 15
@@ -15,6 +29,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//            signingConfig signingConfigs.release
         }
     }
     packagingOptions {
@@ -51,3 +66,4 @@ dependencies {
     compile 'com.android.support:support-v4:23.4.0'
     compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
 }
+

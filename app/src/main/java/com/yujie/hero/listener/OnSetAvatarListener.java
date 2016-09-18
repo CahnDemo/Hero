@@ -223,13 +223,13 @@ public class OnSetAvatarListener implements View.OnClickListener {
                     @Override
                     public void onSuccess(Result result) {
                         if (result!=null & result.isFlag()){
-                            Toast.makeText(mActivity,"avatar upload success!",Toast.LENGTH_LONG).show();
+                            Toast.makeText(mActivity,"头像上传成功",Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "onError: "+error );
+                        Toast.makeText(mActivity,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
         /*************************************/
@@ -243,7 +243,6 @@ public class OnSetAvatarListener implements View.OnClickListener {
             avatar.compress(Bitmap.CompressFormat.JPEG, 100, out);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Log.i(TAG, "头像保存失败");
         }
     }
 

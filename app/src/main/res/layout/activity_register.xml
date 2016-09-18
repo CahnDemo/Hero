@@ -81,7 +81,7 @@
             android:textColor="#ffffff"
             android:layout_alignParentRight="true"
             android:id="@+id/register_activity_EditText_inputPwd"
-            android:hint="Please input your passWord"
+            android:hint="请输入登陆密码"
             android:textColorHint="#afdae1e1"
             android:inputType="textPassword"
             />

@@ -112,7 +112,6 @@ public class SortCourseFragment extends Fragment {
         for (Line line : data.getLines()) {
             for (int i = 0; i < numberOfPoints; i++) {
                 PointValue value = line.getValues().get(i);
-                Log.e(TAG, "prepareDataAnimation: " + value.getX());
                 value.setTarget(i, personData.get(i).getGrade());
             }
         }
@@ -220,7 +219,7 @@ public class SortCourseFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -228,7 +227,6 @@ public class SortCourseFragment extends Fragment {
     private void initData() {
         grades = new ArrayList<>();
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
-        Log.e(TAG, "initData: " + HeroApplication.getInstance().getCurrentUser().getUid().substring(0, 1));
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST, I.Request.REQUEST_GET_SORT_IN_COURSE)
                 .addParam(I.Exercise.COURSE_ID, HeroApplication.getInstance().getCurrentUser().getUid().substring(0, 1))
@@ -236,7 +234,7 @@ public class SortCourseFragment extends Fragment {
                 .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
                     @Override
                     public void onSuccess(ExerciseBean[] result) {
-                        if (result != null) {
+                        if (result != null & result.length!=0) {
                             grades = Utils.array2List(result);
                             adapter = new RecycleAdapter(mContext, grades);
                             manager = new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false);
@@ -252,7 +250,7 @@ public class SortCourseFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -277,7 +275,7 @@ public class SortCourseFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }

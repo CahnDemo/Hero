@@ -25,7 +25,8 @@
         <activity android:name=".activity.RegisterActivity" />
         <activity android:name=".activity.GameActivity" />
         <activity android:name=".activity.ShowSortActivity" />
-        <activity android:name=".activity.ExamResultActivity"></activity>
+        <activity android:name=".activity.ExamResultActivity" />
+        <activity android:name=".activity.ResetPassWordActivity"></activity>
     </application>
 
 </manifest>

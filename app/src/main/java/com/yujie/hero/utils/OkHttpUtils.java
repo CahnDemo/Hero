@@ -173,7 +173,6 @@ public class OkHttpUtils<T> {
                 if (downloadBitmap){
                     InputStream stream = response.body().byteStream();
                     Bitmap value = BitmapFactory.decodeStream(stream);
-                    Log.e(TAG, "onResponse: "+stream +"\n"+value);
                     Message msg = Message.obtain();
                     msg.what = RESULT_SUCCESS;
                     msg.obj = value;

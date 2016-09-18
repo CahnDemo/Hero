@@ -52,7 +52,7 @@
                     android:layout_alignParentRight="true"
                     android:textSize="20dp"
                     android:id="@+id/login_activity_EditText_inputPhone"
-                    android:hint="Please input your id"
+                    android:hint="请输入账号"
                     android:textColorHint="#afdae1e1"
                     android:inputType="text"
                     />
@@ -89,7 +89,7 @@
                     android:textSize="20dp"
                     android:layout_alignParentRight="true"
                     android:id="@+id/login_activity_EditText_inputPwd"
-                    android:hint="Please input your passWord"
+                    android:hint="请输入密码"
                     android:textColorHint="#afdae1e1"
                     android:inputType="textPassword"
                     />
@@ -122,9 +122,9 @@
                     app:layout_marginLeftPercent="5%"
                     app:layout_marginRightPercent="5%"
                     android:id="@+id/login_activity_Button_login"
-                    android:text="@string/login_str"
+                    android:text="登陆"
                     android:textColor="#fff"
-                    android:textSize="20dp"
+                    android:textSize="23dp"
                     android:background="@drawable/login_activity_login_btn_bg"
                     />
             </android.support.percent.PercentRelativeLayout>
@@ -141,9 +141,9 @@
                     app:layout_marginLeftPercent="5%"
                     app:layout_marginRightPercent="5%"
                     android:id="@+id/login_activity_Button_register"
-                    android:text="@string/register_str"
+                    android:text="注册"
                     android:textColor="#fff"
-                    android:textSize="20dp"
+                    android:textSize="23dp"
                     android:background="@drawable/login_activity_login_btn_bg"
                     />
             </android.support.percent.PercentRelativeLayout>

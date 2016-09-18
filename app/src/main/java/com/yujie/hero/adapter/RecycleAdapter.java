@@ -1,6 +1,7 @@
 package com.yujie.hero.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -11,7 +12,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.yujie.hero.HeroApplication;
 import com.yujie.hero.R;
+import com.yujie.hero.activity.GameActivity;
 import com.yujie.hero.bean.ExerciseBean;
 
 import java.util.ArrayList;
@@ -67,7 +70,6 @@ public class RecycleAdapter extends RecyclerView.Adapter<ViewHolder> {
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final ExerciseBean item = getItem(position);
-        Log.e(TAG, "onBindViewHolder: "+position+item );
         if (position<3){
             holder.levelNumber.setVisibility(View.GONE);
             holder.levelAvatar.setVisibility(View.VISIBLE);
@@ -87,6 +89,18 @@ public class RecycleAdapter extends RecyclerView.Adapter<ViewHolder> {
             holder.levelNumber.setText((position+1)+"");
         }
         holder.itemUserName.setText(item.getUser_name());
+        holder.itemChallengeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext,GameActivity.class);
+                String action_code = item.getCourse_id()+","+"1"+","+ HeroApplication.EXERCISE_CODE+","+item.getGrade();
+                intent.putExtra("action_code",action_code);
+                mContext.startActivity(intent);
+            }
+        });
+        if (item.getUser_name().equals(HeroApplication.getInstance().getCurrentUser().getUser_name())){
+            holder.itemChallengeBtn.setVisibility(View.GONE);
+        }
         holder.itemUserGrade.setText(item.getGrade()+"");
         if (listener!=null){
             holder.itemCardRoot.setOnClickListener(new View.OnClickListener() {

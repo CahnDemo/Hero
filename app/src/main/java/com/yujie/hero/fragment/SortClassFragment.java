@@ -115,7 +115,6 @@ public class SortClassFragment extends Fragment {
         for (Line line : data.getLines()) {
             for (int i = 0; i < numberOfPoints; i++) {
                 PointValue value = line.getValues().get(i);
-                Log.e(TAG, "prepareDataAnimation: " + value.getX());
                 value.setTarget(i, personData.get(i).getGrade());
             }
         }
@@ -217,13 +216,13 @@ public class SortClassFragment extends Fragment {
                                 generateData();
                             }
                         } else {
-                            Toast.makeText(mContext, "the student have no exercise data", Toast.LENGTH_LONG).show();
+                            Toast.makeText(mContext, "该学生还未进行练习", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -231,7 +230,6 @@ public class SortClassFragment extends Fragment {
     private void initData() {
         grades = new ArrayList<>();
         OkHttpUtils<ExerciseBean[]> utils = new OkHttpUtils<>();
-        Log.e(TAG, "initData: " + HeroApplication.getInstance().getCurrentUser().getB_class());
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST, I.Request.REQUEST_GET_SORT_IN_CLASS)
                 .addParam(I.User.B_CLASS, HeroApplication.getInstance().getCurrentUser().getB_class() + "")
@@ -239,7 +237,7 @@ public class SortClassFragment extends Fragment {
                 .execute(new OkHttpUtils.OnCompleteListener<ExerciseBean[]>() {
                     @Override
                     public void onSuccess(ExerciseBean[] result) {
-                        if (result != null) {
+                        if (result != null & result.length!=0) {
                             grades = Utils.array2List(result);
                             adapter = new RecycleAdapter(mContext, grades);
                             manager = new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false);
@@ -255,7 +253,7 @@ public class SortClassFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -280,7 +278,7 @@ public class SortClassFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(getActivity(),"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }

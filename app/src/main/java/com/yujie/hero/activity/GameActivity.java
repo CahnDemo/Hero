@@ -63,6 +63,7 @@ public class GameActivity extends AppCompatActivity {
     String time;
     String code;
     int keyCount = 0;
+    int challengePoint = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -141,7 +142,6 @@ public class GameActivity extends AppCompatActivity {
      */
     private void initWordContent(String course_simple_name) {
         ArrayList<WordContentBean> words = new DataHelper(this).getWords(course_simple_name);
-        Log.e(TAG, "initWordContent: "+words.size() );
         StringBuilder sb = new StringBuilder();
         for (WordContentBean bean:words){
             sb.append(bean.getWord()+" ");
@@ -161,8 +161,8 @@ public class GameActivity extends AppCompatActivity {
             course_simple_name = action[0];
             time = action[1];
             code = action[2];
+            challengePoint = Integer.parseInt(action[3]);
         }
-        Log.e(TAG, "initTitle: "+time );
         mc = new MyCountTimer((Long.parseLong(time)) * 60 * 1000,1000);
         timer.setText((Integer.parseInt(time)*60)+"");
         point.setText(HeroApplication.getInstance().getCurrentUser().getTop_grade()+"");
@@ -204,6 +204,7 @@ public class GameActivity extends AppCompatActivity {
          * when the timer is finish,end the contest,and brief the user about the grade,
          * if currentSpeed is better than currentuser's best grade,update the top grade,
          * but no matter whether the result is better, will be upload to server
+         * 当计时器走完了的时候，计算成绩并初始化view
          */
         @Override
         public void onFinish() {
@@ -212,12 +213,12 @@ public class GameActivity extends AppCompatActivity {
             editContent.setEnabled(false);
             final String speed = currentSpeed.getText().toString();
             final UserBean currentUser = HeroApplication.getInstance().getCurrentUser();
-            Log.e(TAG, "onFinish: "+currentUser.getTop_grade() );
+            addGradeToServer(currentUser,speed);
             if (Integer.parseInt(speed)>currentUser.getTop_grade()){
                 dialog = new AlertDialog.Builder(mContext)
-                        .setTitle("result")
-                        .setMessage("your current speed is "+speed+", you win yourself!")
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        .setTitle("成绩单")
+                        .setMessage("你本次的打字速度是:"+speed+",你成功超越了自己")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 editContent.setEnabled(true);
@@ -253,8 +254,8 @@ public class GameActivity extends AppCompatActivity {
                 dialog.show();
             }else {
                 dialog = new AlertDialog.Builder(mContext)
-                        .setTitle("result")
-                        .setMessage("your current speed is "+speed+", you should try again to challenge yourself!")
+                        .setTitle("成绩单")
+                        .setMessage("你本次的打字速度是:"+speed+",你需要更加努力哟")
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -286,7 +287,7 @@ public class GameActivity extends AppCompatActivity {
                 });
                 dialog.show();
             }
-            addGradeToServer(currentUser,speed);
+
         }
 
 
@@ -299,63 +300,77 @@ public class GameActivity extends AppCompatActivity {
      */
     private void addGradeToServer(UserBean currentUser, String speed) {
         if (code.equals(HeroApplication.EXERCISE_CODE)){
-            Date nowTime = new Date(System.currentTimeMillis());
-            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd");
-            String nowDate = sdFormatter.format(nowTime);
-            OkHttpUtils<Result> utils = new OkHttpUtils<>();
-            utils.url(HeroApplication.SERVER_ROOT)
-                    .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXERCISE_GRADE)
-                    .addParam(I.Exercise.GRADE,speed)
-                    .addParam(I.Exercise.EXE_TIME,nowDate)
-                    .addParam(I.Exercise.COURSE_ID,course_simple_name)
-                    .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
-                    .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
-                    .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,7))
-                    .post()
-                    .targetClass(Result.class)
-                    .execute(new OkHttpUtils.OnCompleteListener<Result>() {
-                        @Override
-                        public void onSuccess(Result result) {
-                            if (result!=null & result.isFlag()){
-                                Toast.makeText(GameActivity.this,"the grade is uploaded...",Toast.LENGTH_LONG).show();
-                            }
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_LONG).show();
-                        }
-                    });
+            addExerciseGreade(currentUser, speed);
         }else if (code.equals(HeroApplication.EXAM_CODE)){
-            Date nowTime = new Date(System.currentTimeMillis());
-            SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
-            String nowDate = sdFormatter.format(nowTime);
-            OkHttpUtils<Result> utils = new OkHttpUtils<>();
-            utils.url(HeroApplication.SERVER_ROOT)
-                    .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXAM_GRADE)
-                    .addParam(I.ExamGrade.EXAM_ID,HeroApplication.getInstance().getCURRENT_EXAM_ID()+"")
-                    .addParam(I.ExamGrade.GRADE,speed)
-                    .addParam(I.ExamGrade.SUBMIT_TIME,nowDate)
-                    .addParam(I.ExamGrade.USER_NAME,currentUser.getUser_name())
-                    .addParam(I.ExamGrade.B_CLASS,currentUser.getB_class()+"")
-                    .addParam(I.ExamGrade.COURSE_ID,course_simple_name)
-                    .addParam(I.ExamGrade.B_START_TIME,currentUser.getUid().substring(1,7))
-                    .post()
-                    .targetClass(Result.class)
-                    .execute(new OkHttpUtils.OnCompleteListener<Result>() {
-                        @Override
-                        public void onSuccess(Result result) {
-                            if (result!=null & result.isFlag()){
-                                Toast.makeText(GameActivity.this,"grade is uploaded...",Toast.LENGTH_LONG).show();
+            addExamGrades(currentUser, speed);
+        }
+    }
+
+    private void addExamGrades(final UserBean currentUser, final String speed) {
+        Date nowTime = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String nowDate = sdFormatter.format(nowTime);
+        OkHttpUtils<Result> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXAM_GRADE)
+                .addParam(I.ExamGrade.EXAM_ID,HeroApplication.getInstance().getCURRENT_EXAM_ID()+"")
+                .addParam(I.ExamGrade.GRADE,speed)
+                .addParam(I.ExamGrade.SUBMIT_TIME,nowDate)
+                .addParam(I.ExamGrade.USER_NAME,currentUser.getUser_name())
+                .addParam(I.ExamGrade.B_CLASS,currentUser.getB_class()+"")
+                .addParam(I.ExamGrade.COURSE_ID,course_simple_name)
+                .addParam(I.ExamGrade.B_START_TIME,currentUser.getUid().substring(1,7))
+                .post()
+                .targetClass(Result.class)
+                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                    @Override
+                    public void onSuccess(Result result) {
+                        if (result!=null & result.isFlag()){
+                            Toast.makeText(GameActivity.this,"考试成绩已上传",Toast.LENGTH_SHORT).show();
+                            addExerciseGreade(currentUser,speed);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Toast.makeText(GameActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void addExerciseGreade(UserBean currentUser, final String speed) {
+        Date nowTime = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy-MM-dd");
+        String nowDate = sdFormatter.format(nowTime);
+        OkHttpUtils<Result> utils = new OkHttpUtils<>();
+        utils.url(HeroApplication.SERVER_ROOT)
+                .addParam(I.REQUEST,I.Request.REQUEST_ADD_EXERCISE_GRADE)
+                .addParam(I.Exercise.GRADE,speed)
+                .addParam(I.Exercise.EXE_TIME,nowDate)
+                .addParam(I.Exercise.COURSE_ID,course_simple_name)
+                .addParam(I.Exercise.USER_NAME,currentUser.getUser_name())
+                .addParam(I.Exercise.B_CLASS,currentUser.getB_class()+"")
+                .addParam(I.Exercise.START_TIME,currentUser.getUid().substring(1,7))
+                .post()
+                .targetClass(Result.class)
+                .execute(new OkHttpUtils.OnCompleteListener<Result>() {
+                    @Override
+                    public void onSuccess(Result result) {
+                        if (result!=null & result.isFlag()){
+                            Toast.makeText(GameActivity.this,"练习成绩已上传",Toast.LENGTH_LONG).show();
+                            if (challengePoint!=0){
+                                if (Integer.parseInt(speed)>challengePoint){
+                                    Toast.makeText(GameActivity.this,"恭喜你,你成功的超越了你的对手",Toast.LENGTH_LONG).show();
+                                }
                             }
                         }
+                    }
 
-                        @Override
-                        public void onError(String error) {
-                            Toast.makeText(GameActivity.this,"upload faild...please try again later...",Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        }
+                    @Override
+                    public void onError(String error) {
+                        Toast.makeText(GameActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     /**
@@ -363,7 +378,7 @@ public class GameActivity extends AppCompatActivity {
      * @param currentUser
      * @param speed
      */
-    private void uploadGrade(UserBean currentUser, String speed) {
+    private void uploadGrade(UserBean currentUser, final String speed) {
         OkHttpUtils<Result> utils = new OkHttpUtils();
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST,I.Request.REQUEST_UPDATE_BEST_GRADE)
@@ -375,15 +390,17 @@ public class GameActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Result result) {
                         if (result!=null & result.isFlag()){
-                            Toast.makeText(GameActivity.this,"you top_grade have updated!",Toast.LENGTH_LONG).show();
+                            Toast.makeText(GameActivity.this,"个人最高成绩已更新",Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-                        Toast.makeText(GameActivity.this,"No Internet connected....pleast try again later",Toast.LENGTH_LONG).show();
+                        Toast.makeText(GameActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_SHORT).show();
                     }
                 });
     }
+
+
 
 }

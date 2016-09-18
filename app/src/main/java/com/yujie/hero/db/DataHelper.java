@@ -181,9 +181,7 @@ public class DataHelper extends SQLiteOpenHelper {
         int start = r.nextInt(max-4);
         if (start<0)
             start = start+4;
-        Log.e("data", "getWords: "+start );
         String sql = "select * from t_words_content where course_id=? limit "+start+","+4;
-        Log.e("data", "getWords: "+sql );
         Cursor cursor = db.rawQuery(sql, new String[]{course_id});
         while (cursor.moveToNext()){
             word = new WordContentBean();

@@ -26,6 +26,9 @@ public class I {
 		public static final String REQUEST_ADD_EXAM_GRADE = "addExamGrade";
 		public static final String REQUEST_GET_EXAM_NOW = "getExamNow";
 		public static final String REQUEST_GET_EXAM_GRADE = "getExamGrade";
+		public static final String REQUEST_GET_CLASS_AVG_GRADE = "getAvgExamGrade";
+		public static final String REQUEST_GET_CLASS_GRADE_LIST = "getClassGradeList";
+		public static final String REQUEST_UPDATE_USER = "updateUser";
 	}
 
 	public interface User{

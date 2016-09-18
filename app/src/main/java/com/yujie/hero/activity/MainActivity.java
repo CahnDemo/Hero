@@ -277,7 +277,6 @@ public class MainActivity extends AppCompatActivity
                             noJoinTxt.setVisibility(View.VISIBLE);
                             noJoinTxt.setText("The last ten exercises");
                             stuGrades = Utils.array2List(result);
-                            Log.e(TAG, "onSuccess: "+stuGrades.toString() );
                             numberOfPoints = stuGrades.size();
                             randomNumbersTab = new int[maxNumberOfLines][numberOfPoints];
                             generateValues();
@@ -345,7 +344,6 @@ public class MainActivity extends AppCompatActivity
      */
     private void showAvatar(String url, final CircleTextImageView userAvatar) {
         OkHttpUtils<Bitmap> utils = new OkHttpUtils<>();
-        Log.e(TAG, "showAvatar: "+url );
         utils.url(url)
                 .downloadFile()
                 .execute(new OkHttpUtils.OnCompleteListener<Bitmap>() {
@@ -363,7 +361,6 @@ public class MainActivity extends AppCompatActivity
                                 result.compress(Bitmap.CompressFormat.JPEG, 100, out);
                             } catch (FileNotFoundException e) {
                                 e.printStackTrace();
-                                Log.i(TAG, "头像保存失败");
                             }
                         }else {
                             if (file.exists()){
@@ -431,7 +428,7 @@ public class MainActivity extends AppCompatActivity
         }else if (id == R.id.logout){
             logout();
         }else if (id == R.id.point){
-            
+            startActivity(new Intent(mContext,ResetPassWordActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -467,16 +464,18 @@ public class MainActivity extends AppCompatActivity
                             nowExam = Utils.array2List(result);
                             examArray = new String[nowExam.size()];
                             for (int i=0;i<nowExam.size();i++){
-                                examArray[i] = "name: "+nowExam.get(i).getExam_name()+" course: "+
-                                        nowExam.get(i).getCourse_id()+" time: "+nowExam.get(i).getExam_time();
+                                examArray[i] = "名称: "+nowExam.get(i).getExam_name()+" 课程: "+
+                                        nowExam.get(i).getCourse_id()+" 时间: "+nowExam.get(i).getExam_time();
                             }
                             showExamDialog();
+                        }else {
+                            Toast.makeText(MainActivity.this,"当前没有正在进行的考试",Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(MainActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -486,20 +485,19 @@ public class MainActivity extends AppCompatActivity
      */
     private void showExamDialog() {
         Dialog dialog = new AlertDialog.Builder(this)
-                .setTitle("current testing exams")
+                .setTitle("当前已开考的考试")
                 .setItems(examArray, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         ExamBean examBean = nowExam.get(which);
-                        Log.e(TAG, "onClick: "+examBean.getId() );
                         HeroApplication.getInstance().setCURRENT_EXAM_ID(examBean.getId());
                         if(new DataHelper(mContext).getWordCount(examBean.getCourse_id())==0){
-                            Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this,"没有发现单词数据,开始下载",Toast.LENGTH_SHORT).show();
                             pd.show();
                             downloadContent(examBean.getCourse_id(),"1");
                         }else {
                             Intent intent = new Intent(mContext,GameActivity.class);
-                            String action_code = examBean.getCourse_id()+","+"1"+","+HeroApplication.EXAM_CODE;
+                            String action_code = examBean.getCourse_id()+","+"1"+","+HeroApplication.EXAM_CODE+","+"0";
                             intent.putExtra("action_code",action_code);
                             startActivity(intent);
                         }
@@ -520,7 +518,7 @@ public class MainActivity extends AppCompatActivity
         final Spinner choseDialogSpinnerCourse = (Spinner) view.findViewById(R.id.chose_dialog_Spinner_course);
         initSpinner(choseDialogSpinnerCourse, choseDialogSpinnerTime,time,course);
         Dialog dialog = new AlertDialog.Builder(this)
-                .setTitle("chose time and course")
+                .setTitle("选择课程及时间")
                 .setView(view)
                 .setNegativeButton("OK", new DialogInterface.OnClickListener() {
                     @Override
@@ -533,12 +531,12 @@ public class MainActivity extends AppCompatActivity
                             time = time.substring(0,1);
                         }
                         if(new DataHelper(mContext).getWordCount(course_simpleName)==0){
-                            Toast.makeText(MainActivity.this,"No data,now downloading...please wait...",Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this,"没有发现单词数据,开始下载",Toast.LENGTH_SHORT).show();
                             pd.show();
                             downloadContent(course_simpleName,time);
                         }else {
                             Intent intent = new Intent(mContext,GameActivity.class);
-                            String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE;
+                            String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE+","+"0";
                             intent.putExtra("action_code",action_code);
                             startActivity(intent);
                         }
@@ -562,18 +560,17 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(WordContentBean[] result) {
                         if (result!=null&result.length!=0){
-                            Toast.makeText(MainActivity.this,"Download finish,Now is add to local database...please wait...",Toast.LENGTH_SHORT).show();
                             if (new DataHelper(mContext).addWord(Utils.array2List(result))){
                                 pd.dismiss();
-                                Toast.makeText(MainActivity.this,"add success!",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this,"单词数据库更新成功",Toast.LENGTH_SHORT).show();
                                 if (HeroApplication.getInstance().getCURRENT_EXAM_ID()!=0){
                                     Intent intent = new Intent(mContext,GameActivity.class);
-                                    String action_code = course_simpleName+","+time+","+HeroApplication.EXAM_CODE;
+                                    String action_code = course_simpleName+","+"1"+","+HeroApplication.EXAM_CODE+","+"0";
                                     intent.putExtra("action_code",action_code);
                                     startActivity(intent);
                                 }else {
                                     Intent intent = new Intent(mContext,GameActivity.class);
-                                    String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE;
+                                    String action_code = course_simpleName+","+time+","+HeroApplication.EXERCISE_CODE+","+"0";
                                     intent.putExtra("action_code",action_code);
                                     startActivity(intent);
                                 }
@@ -584,7 +581,7 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(MainActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -616,9 +613,8 @@ public class MainActivity extends AppCompatActivity
                             chart.setVisibility(View.VISIBLE);
                             noJoinImg.setVisibility(View.GONE);
                             noJoinTxt.setVisibility(View.VISIBLE);
-                            noJoinTxt.setText("The best ten exercises");
+                            noJoinTxt.setText("最好的十个成绩");
                             stuGrades = Utils.array2List(result);
-                            Log.e(TAG, "onSuccess: "+stuGrades.toString() );
                             numberOfPoints = stuGrades.size();
                             randomNumbersTab = new int[maxNumberOfLines][numberOfPoints];
                             generateValues();
@@ -632,7 +628,7 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onError(String error) {
-
+                        Toast.makeText(MainActivity.this,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -650,7 +646,6 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onColumnValueSelected(int columnIndex, int subcolumnIndex, SubcolumnValue value) {
-            Toast.makeText(mContext,stuGrades.get(subcolumnIndex).getExe_tiem(), Toast.LENGTH_SHORT).show();
         }
 
         @Override
