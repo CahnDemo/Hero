@@ -79,12 +79,12 @@ public class LoginActivity extends AppCompatActivity {
         final String uid = loginActivityEditTextInputPhone.getText().toString();
         String pwd = loginActivityEditTextInputPwd.getText().toString();
         if (uid.isEmpty()){
-            loginActivityEditTextInputPhone.setError("No input,please try again");
+            loginActivityEditTextInputPhone.setError("未输入内容,请重试");
             loginActivityEditTextInputPhone.requestFocus();
             return;
         }
         if (pwd.isEmpty()){
-            loginActivityEditTextInputPwd.setError("No input,please try again");
+            loginActivityEditTextInputPwd.setError("未输入内容,请重试");
             loginActivityEditTextInputPwd.requestFocus();
             return;
         }
@@ -98,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
                 .execute(new OkHttpUtils.OnCompleteListener<UserBean>() {
                     @Override
                     public void onSuccess(UserBean result) {
-                        if (result==null&result.getUid()==null){
+                        if (result.getUid()==null){
                             Toast.makeText(LoginActivity.this,"登陆失败，请确认您的账号或密码",Toast.LENGTH_LONG).show();
                         }else {
                             if(new DataHelper(mContext).findUserByUid(uid)!=null){

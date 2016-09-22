@@ -17,17 +17,23 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.yujie.hero.HeroApplication;
 import com.yujie.hero.I;
 import com.yujie.hero.R;
 import com.yujie.hero.bean.Result;
 import com.yujie.hero.utils.FileUtils;
 import com.yujie.hero.utils.OkHttpUtils;
+import com.zhy.http.okhttp.callback.Callback;
+import com.zhy.http.okhttp.callback.StringCallback;
+
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-
+import java.io.IOException;
 
 
 /**
@@ -209,9 +215,16 @@ public class OnSetAvatarListener implements View.OnClickListener {
         }
         ivAvatar.setImageBitmap(avatar);
         File file = FileUtils.getAvatarPath(mActivity,mAvatarType, mUserName + ".jpg");
-        /**
-         * upload the avatar
-         */
+        if(!file.getParentFile().exists()){
+            return ;
+        }
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(file);
+            avatar.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            /**
+             * upload the avatar
+             */
         OkHttpUtils<Result> utils = new OkHttpUtils<>();
         utils.url(HeroApplication.SERVER_ROOT)
                 .addParam(I.REQUEST,I.Request.REQUEST_UPLOAD_AVATAR)
@@ -229,18 +242,11 @@ public class OnSetAvatarListener implements View.OnClickListener {
 
                     @Override
                     public void onError(String error) {
+                        Log.e(TAG, "onError: "+error );
                         Toast.makeText(mActivity,"网络不通畅,请稍后再试",Toast.LENGTH_LONG).show();
                     }
                 });
-        /*************************************/
-
-        if(!file.getParentFile().exists()){
-            return ;
-        }
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(file);
-            avatar.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            /*************************************/
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
