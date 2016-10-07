@@ -13,7 +13,7 @@
         android:layout_height="0dp"
         app:layout_widthPercent="15%"
         app:layout_heightPercent="18%"
-        android:src="@mipmap/app_icon"
+        android:src="@mipmap/app"
         android:layout_centerHorizontal="true"
         app:layout_marginTopPercent="3%"
         />

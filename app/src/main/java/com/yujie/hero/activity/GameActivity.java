@@ -328,6 +328,8 @@ public class GameActivity extends AppCompatActivity {
                         if (result!=null & result.isFlag()){
                             Toast.makeText(GameActivity.this,"考试成绩已上传",Toast.LENGTH_SHORT).show();
                             addExerciseGreade(currentUser,speed);
+                        }else {
+                            Toast.makeText(GameActivity.this,"考试时间已过，无法上传考试成绩",Toast.LENGTH_LONG).show();
                         }
                     }
 

@@ -5,6 +5,7 @@ public class ExamBean {
 	private String exam_name;
 	private String exam_time;
 	private String course_id;
+	private int State;
 	public int getId() {
 		return id;
 	}
@@ -29,21 +30,27 @@ public class ExamBean {
 	public void setCourse_id(String course_id) {
 		this.course_id = course_id;
 	}
+	public int getState() {
+		return State;
+	}
+	public void setState(int state) {
+		State = state;
+	}
 	@Override
 	public String toString() {
-		return "ExamBean [id=" + id + ", exam_name=" + exam_name
-				+ ", exam_time=" + exam_time + ", course_id=" + course_id + "]";
+		return "ExamBean [id=" + id + ", exam_name=" + exam_name + ", exam_time=" + exam_time + ", course_id="
+				+ course_id + ", State=" + State + "]";
 	}
-	public ExamBean() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-	public ExamBean(int id, String exam_name, String exam_time, String course_id) {
+	public ExamBean(int id, String exam_name, String exam_time, String course_id, int state) {
 		super();
 		this.id = id;
 		this.exam_name = exam_name;
 		this.exam_time = exam_time;
 		this.course_id = course_id;
+		State = state;
 	}
-	
+	public ExamBean() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
 }
